@@ -2,6 +2,8 @@ import Header from "./components/Header";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Noto_Sans_JP } from "next/font/google";
+import { NextAuthProvider } from "./lib/next-auth/provider";
+import BottomNavigation from "./components/BottomNavigation";
 
 const notoSansJP = Noto_Sans_JP({ subsets: ["latin"], weight: ["400"] });
 
@@ -17,11 +19,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body
-        className={notoSansJP.className}
-      >
-        <Header />
-        {children}
+      <body className={`${notoSansJP.className} min-h-screen bg-gray-100 flex`}>
+        <NextAuthProvider>
+          <div className="w-full max-w-[790px] mx-auto bg-white min-h-screen relative">
+            <Header />
+            <main className="pb-16"> {/* ボトムナビ分の余白 */}
+              {children}
+            </main>
+            <BottomNavigation />
+          </div>
+        </NextAuthProvider>
       </body>
     </html>
   );

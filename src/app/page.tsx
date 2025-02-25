@@ -1,6 +1,9 @@
 "use client";
 
-import Fragrance from "./components/Fragrance";
+import SearchCategories from "./components/SearchCategories";
+import PopularThemes from "./components/PopularThemes";
+import FeaturedBrands from "./components/FeaturedBrands";
+import TrendingRankings from "./components/TrendingRankings";
 
 // 疑似データ
 const fragrance = [
@@ -52,17 +55,14 @@ const fragrance = [
   // 他の本のデータ...
 ];
 
-// eslint-disable-next-line @next/next/no-async-client-component
 export default function Home() {
   return (
     <>
       <main className="flex flex-wrap justify-center items-center md:mt-32 mt-20">
-        <h2 className="text-center w-full font-bold text-3xl mb-2">
-          Fragrance Commerce
-        </h2>
-        {fragrance.map((item) => (
-          <Fragrance key={item.id} fragrance={item} />
-        ))}
+        <SearchCategories />
+        <PopularThemes />
+        <FeaturedBrands />
+        <TrendingRankings />
       </main>
     </>
   );
