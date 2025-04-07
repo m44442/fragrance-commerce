@@ -1,19 +1,16 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// prisma/schema.prisma
 datasource db {
-  provider  = "postgresql"
-  url  	    = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+// 認証関連のモデル
 model Account {
   id                 String  @id @default(cuid())
   userId             String  @map("user_id")
@@ -27,9 +24,9 @@ model Account {
   scope              String?
   id_token           String? @db.Text
   session_state      String?
- 
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
@@ -40,7 +37,7 @@ model Session {
   userId       String   @map("user_id")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+
   @@map("sessions")
 }
 
@@ -50,8 +47,27 @@ model User {
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
+  
+  // カスタムフィールド
+  lineId        String?   @unique
+  phoneNumber   String?
+  address       String?
+  postalCode    String?
+  prefecture    String?
+  city          String?
+
+  // リレーション
   accounts      Account[]
   sessions      Session[]
+  orders        Order[]
+  cart          Cart?
+  favorites     Favorite[]
+  subscriptions Subscription[]
+  reviews       Review[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   purchases     Purchase[]
 
   @@map("users")
@@ -63,15 +79,358 @@ model Purchase {
   fragranceId   String
   createdAt     DateTime  @default(now())
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fragrance     Product   @relation(fields: [fragranceId], references: [id], onDelete: Cascade)
 
+  @@map("purchases")
 }
 
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime
- 
+
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
 
+// 商品関連モデル
+model Product {
+  id               String      @id @default(cuid())
+  name             String
+  brandId          String
+  brand            Brand       @relation(fields: [brandId], references: [id])
+  description      String?     @db.Text
+  price            Int
+  discountPrice    Int?
+  stock            Int         @default(0)
+  thumbnailUrl     String?
+  
+  // MicroCMS連携用ID
+  microCmsId       String?     @unique
+  microCmsUpdatedAt DateTime?
+  
+  // 香水の特徴
+  topNotes         String?
+  middleNotes      String?
+  baseNotes        String?
+  volume           Int?        // ml単位
+  concentration    String?     // EDT, EDP等
+  
+  // リレーション
+  images           ProductImage[]
+  categories       CategoryOnProduct[]
+  scents           ProductScent[]
+  orderItems       OrderItem[]
+  cartItems        CartItem[]
+  favorites        Favorite[]
+  reviews          Review[]
+  themeProducts    ThemeProduct[]
+  purchases        Purchase[]
+  
+  // 表示用フラグ
+  isPublished      Boolean     @default(true)
+  isNew            Boolean     @default(false)
+  isFeatured       Boolean     @default(false)
+  
+  // レビュー集計
+  averageRating    Float?
+  reviewCount      Int         @default(0)
+  
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([brandId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  order     Int     @default(0)
+
+  @@map("product_images")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  nameJp      String?
+  description String?   @db.Text
+  logoUrl     String?
+  
+  // MicroCMS連携用ID
+  microCmsId  String?   @unique
+  
+  // リレーション
+  products    Product[]
+  
+  // 表示用フラグ
+  isFeatured  Boolean   @default(false)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("brands")
+}
+
+model Category {
+  id          String              @id @default(cuid())
+  name        String
+  description String?             @db.Text
+  imageUrl    String?
+  
+  // MicroCMS連携用ID
+  microCmsId  String?             @unique
+  
+  // リレーション
+  products    CategoryOnProduct[]
+  
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("categories")
+}
+
+model CategoryOnProduct {
+  productId   String
+  categoryId  String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@map("category_on_product")
+}
+
+// 香りの系統
+model Scent {
+  id          String         @id @default(cuid())
+  name        String
+  description String?        @db.Text
+  
+  // MicroCMS連携用ID
+  microCmsId  String?        @unique
+  
+  // リレーション
+  products    ProductScent[]
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("scents")
+}
+
+model ProductScent {
+  productId   String
+  scentId     String
+  intensity   Int      @default(5) // 1-10の強度
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  scent       Scent    @relation(fields: [scentId], references: [id], onDelete: Cascade)
+
+  @@id([productId, scentId])
+  @@map("product_scents")
+}
+
+// テーマ（「紅茶系香水」「シャンプーっぽい香り」などのテーマ）
+model Theme {
+  id          String         @id @default(cuid())
+  name        String
+  description String?        @db.Text
+  imageUrl    String?
+  
+  // MicroCMS連携用ID
+  microCmsId  String?        @unique
+  
+  // リレーション
+  products    ThemeProduct[]
+  
+  // 表示用フラグ
+  isFeatured  Boolean        @default(false)
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("themes")
+}
+
+model ThemeProduct {
+  themeId     String
+  productId   String
+  order       Int      @default(0)
+  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([themeId, productId])
+  @@map("theme_products")
+}
+
+// ユーザーインタラクション
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  title     String?
+  content   String?  @db.Text
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+// 注文関連のモデル
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  
+  status          OrderStatus @default(PENDING)
+  totalAmount     Int
+  
+  // 配送情報
+  shippingName    String?
+  shippingAddress String?
+  shippingCity    String?
+  shippingZip     String?
+  
+  // Stripe決済情報
+  stripePaymentId String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  quantity    Int
+  unitPrice   Int
+  totalPrice  Int
+  
+  // 注文時の商品情報スナップショット
+  productName String
+  brandName   String
+
+  @@map("order_items")
+}
+
+// カート
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+
+  @@map("cart_items")
+}
+
+// サブスクリプション関連のモデル
+model Subscription {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status              SubscriptionStatus  @default(ACTIVE)
+  plan                SubscriptionPlan    @default(MONTHLY)
+  
+  // Stripe情報
+  stripeCustomerId    String?
+  stripeSubscriptionId String?
+  
+  // 次回配送情報
+  nextDeliveryDate    DateTime?
+  
+  // サブスクリプション履歴
+  deliveries          SubscriptionDelivery[]
+  
+  startDate           DateTime            @default(now())
+  endDate             DateTime?
+  canceledAt          DateTime?
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@map("subscriptions")
+}
+
+model SubscriptionDelivery {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  productId      String?
+  productName    String
+  status         DeliveryStatus @default(PENDING)
+  
+  shippingDate   DateTime?
+  deliveredDate  DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("subscription_deliveries")
+}
+
+// 列挙型
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+  EXPIRED
+}
+
+enum SubscriptionPlan {
+  MONTHLY  // 月額
+  QUARTERLY // 3ヶ月
+  BIANNUAL  // 半年
+  ANNUAL    // 年間
+}
+
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FAILED
+}
