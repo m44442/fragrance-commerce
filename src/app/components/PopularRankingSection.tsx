@@ -12,22 +12,18 @@ const PopularRankingSection = async () => {
   return (
     <div className="px-4 py-6 bg-gray-50">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">急上昇ランキング</h2>
+        <h2 className="text-xl font-bold">セレクトアイテム</h2>
         <Link href="/rankings" className="text-gray-500 text-sm">
           もっと見る &gt;
         </Link>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        この1週間でアクセス数が急増したアイテムをご紹介します。
+      シーン別や香り別など、多彩なテーマごとにアイテムをセレクトしています。
       </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {contents.map((contents: productType) => (
             <Link key={contents.id} href={`/products/${contents.id}`} className="block">
               <div className="relative bg-white rounded-lg overflow-hidden shadow-sm">
-                {/* ランキング表示 */}
-                <div className="absolute top-0 left-0 w-8 h-8 bg-yellow-500 text-white flex items-center justify-center font-bold z-10">
-                  {contents.rank}
-                </div>
                 
                 {/* 商品画像 */}
                 <div className="h-40 bg-gray-200 relative">

@@ -4,11 +4,16 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request, response: Response) {
-    const { title, price, imageUrl } = await request.json();
-    console.log(title, price, imageUrl);
+    const { title, price, imageUrl, fragranceId, userId } = await request.json();
+    console.log(title, price, imageUrl, fragranceId, userId);
 
     try {
         const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            metadata: {
+                fragranceId: fragranceId,
+            },
+            client_reference_id: userId,
             line_items: [
                 {
                     price_data: {
@@ -27,9 +32,10 @@ export async function POST(request: Request, response: Response) {
             cancel_url: `http://localhost:3000`,
         });
 
-        console.log(session);
+        console.log("Created Stripe session:", session);
         return NextResponse.json({ checkout_url: session.url });
     } catch (err: any) {
+        console.error("Error creating checkout session:", err);
         return NextResponse.json({ error: err.message });
     }
 }

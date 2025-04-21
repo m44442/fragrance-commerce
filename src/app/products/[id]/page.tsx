@@ -4,12 +4,17 @@ import React, { useState, useEffect } from "react";
 import { getDetailProduct } from "@/lib/microcms/client";
 import { useOptimistic } from "react";
 import { useParams } from "next/navigation"; // useParamsを使用
+import { useSession } from "next-auth/react";
+
+
 
 const DetailProduct = () => {
   const params = useParams(); // paramsを取得
   const [product, setProduct] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const { data: session } = useSession(); // useSessionを使用してセッション情報を取得
+  const user: any = session?.user;
 
   const [optimisticLiked, addOptimisticLiked] = useOptimistic(
     isLiked,
@@ -36,7 +41,7 @@ const DetailProduct = () => {
   const handleLike = async () => {
     addOptimisticLiked(!optimisticLiked);
     try {
-      await fetch(`/api/like/${params.id}`, {
+      await fetch(`/api/like/${params?.id}`, {
         method: "POST",
         body: JSON.stringify({ liked: !optimisticLiked }),
         headers: {
@@ -53,7 +58,7 @@ const DetailProduct = () => {
   const handleAddToCart = async () => {
     addOptimisticAddedToCart(!optimisticAddedToCart);
     try {
-      await fetch(`/api/cart/${params.id}`, {
+      await fetch(`/api/cart/${params?.id}`, {
         method: "POST",
         body: JSON.stringify({ added: !optimisticAddedToCart }),
         headers: {
@@ -81,7 +86,13 @@ const DetailProduct = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: product.title, price: product.price, imageUrl: product.thumbnail.url }),
+          body: JSON.stringify({ 
+            title: product.title, 
+            price: product.price, 
+            imageUrl: product.thumbnail.url,
+            userId: user?.id, // userIdを渡す
+            fragranceId: product.id, // fragranceIdを渡す
+          }),
         }
       );
   

@@ -5,6 +5,7 @@ import PopularRankingSection from "@/components/PopularRankingSection";
 import BrandSection from "@/components/BrandSection";
 import NewArrivalsSection from "@/components/NewArrivalsSection";
 import PopularThemeSection from "@/components/PopularThemeSection";
+import TrendingRankings from "./components/TrendingRankings";
 
 export default function Home() {
   return (
@@ -14,9 +15,9 @@ export default function Home() {
       
       {/* カテゴリ検索 */}
       <CategorySection />
-      
+
       {/* 人気テーマ */}
-      <PopularThemeSection />
+      {<TrendingRankings />}
       
       {/* 急上昇ランキング */}
       <PopularRankingSection />
