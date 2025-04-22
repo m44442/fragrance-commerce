@@ -3,17 +3,17 @@ import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { getDetailProduct } from "@/lib/microcms/client";
 import { useOptimistic } from "react";
-import { useParams } from "next/navigation"; // useParamsを使用
+import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-
-
+import PaymentComponent from "@/components/PaymentComponent"; // 新しく作成するコンポーネントをインポート
 
 const DetailProduct = () => {
-  const params = useParams(); // paramsを取得
+  const params = useParams();
   const [product, setProduct] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
-  const { data: session } = useSession(); // useSessionを使用してセッション情報を取得
+  const [showPayment, setShowPayment] = useState(false); // 決済UIの表示制御
+  const { data: session } = useSession();
   const user: any = session?.user;
 
   const [optimisticLiked, addOptimisticLiked] = useOptimistic(
@@ -28,7 +28,7 @@ const DetailProduct = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!params?.id) return; // params.idが存在するか確認
+      if (!params?.id) return;
       if (typeof params.id === "string") {
         const productData = await getDetailProduct(params.id);
         console.log("Fetched product data:", productData);
@@ -39,6 +39,13 @@ const DetailProduct = () => {
   }, [params?.id]);
 
   const handleLike = async () => {
+    // ログインチェック
+    if (!session) {
+      // ログインページにリダイレクト
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
+      return;
+    }
+    
     addOptimisticLiked(!optimisticLiked);
     try {
       await fetch(`/api/like/${params?.id}`, {
@@ -56,6 +63,13 @@ const DetailProduct = () => {
   };
 
   const handleAddToCart = async () => {
+    // ログインチェック
+    if (!session) {
+      // ログインページにリダイレクト
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
+      return;
+    }
+    
     addOptimisticAddedToCart(!optimisticAddedToCart);
     try {
       await fetch(`/api/cart/${params?.id}`, {
@@ -72,41 +86,22 @@ const DetailProduct = () => {
     }
   };
 
-  const startCheckout = async () => {
+  // 変更: チェックアウトボタンクリック時に決済UIを表示
+  const startCheckout = () => {
+    // ログインチェック
+    if (!session) {
+      // ログインページにリダイレクト
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
+      return;
+    }
+    
     if (!product) {
       console.error("Product data is not loaded yet.");
       return;
     }
-  
-    console.log("Product data being sent to checkout:", product);
-  
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/checkout`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            title: product.title, 
-            price: product.price, 
-            imageUrl: product.thumbnail.url,
-            userId: user?.id, // userIdを渡す
-            fragranceId: product.id, // fragranceIdを渡す
-          }),
-        }
-      );
-  
-      const responseData = await response.json();
-      console.log("Checkout response data:", responseData);
-  
-      if (responseData.checkout_url) {
-        window.location.href = responseData.checkout_url;
-      } else {
-        console.error("Checkout URL not found in response");
-      }
-    } catch (err) {
-      console.error("Error in startCheckout:", err);
-    }
+    
+    // 決済UIを表示
+    setShowPayment(true);
   };
 
   if (!product) {
@@ -139,6 +134,11 @@ const DetailProduct = () => {
             </span>
           </div>
 
+          {/* 金額表示を追加 */}
+          <div className="mt-4 text-xl font-bold">
+            ¥{product.price?.toLocaleString()}
+          </div>
+
           <div className="flex justify-between items-center mt-4">
             <button
               className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ${optimisticAddedToCart ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -160,6 +160,19 @@ const DetailProduct = () => {
               {optimisticLiked ? "♥ いいね済み" : "♥ いいね"}
             </button>
           </div>
+          
+          {/* 決済コンポーネントの表示 */}
+          {showPayment && (
+            <div className="mt-8 border-t pt-6">
+              <PaymentComponent 
+                productId={product.id} 
+                productName={product.title} 
+                productPrice={product.price} 
+                brandName={product.brand} 
+                onPaymentComplete={() => setShowPayment(false)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
