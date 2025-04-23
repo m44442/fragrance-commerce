@@ -11,17 +11,8 @@ import {
 } from "@stripe/react-stripe-js";
 import { useSession } from "next-auth/react";
 
-// 環境変数からStripeのキーを取得 - ここが重要
-// undefinedの場合は早期に対処
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-if (!stripePublishableKey) {
-  console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
-}
-
 // Stripeの初期化
-const stripePromise = stripePublishableKey 
-  ? loadStripe(stripePublishableKey)
-  : null;
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // PaymentFormコンポーネント
 const PaymentForm = ({
@@ -43,7 +34,6 @@ const PaymentForm = ({
   const elements = useElements();
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("card");
 
   useEffect(() => {
     if (!stripe) return;
@@ -87,93 +77,81 @@ const PaymentForm = ({
 
     setIsLoading(true);
 
-    const { error: submitError, paymentMethod } = await elements.submit();
-
-    if (submitError) {
-      setMessage(submitError.message || "フォームの送信中にエラーが発生しました。");
-      setIsLoading(false);
-      return;
-    }
-  
-    // 決済手段に基づいて処理を分岐
-  if (paymentMethod === 'external_paidy') { // カスタム決済手段のIDに応じて変更
     try {
-      // Paidyの処理（バックエンドへリクエスト）
-      const response = await fetch('/api/checkout/paidy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId,
-          quantity: 1
-        }),
-      });
+      // elements.submit()で選択された決済方法を取得
+      const { error: submitError, selectedPaymentMethod } = await elements.submit();
+
+      if (submitError) {
+        setMessage(submitError.message || "フォームの送信中にエラーが発生しました。");
+        setIsLoading(false);
+        return;
+      }
+
+      // 選択された決済方法によって分岐
+    switch (selectedPaymentMethod) {
+      case 'cpmt_1RGvICDP6em8TiNFEoCpZ1en': // Paidy
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paidy-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
       
-      const data = await response.json();
+      case 'cpmt_1RGvJVDP6em8TiNF4aykL5f9': // PayPay
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paypay-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
       
-      if (data.checkout_url) {
-        // Paidyの決済ページにリダイレクト
-        window.location.href = data.checkout_url;
-      } else {
-        setMessage("Paidy決済の準備に失敗しました。");
+      case 'cpmt_1RGvLxDP6em8TiNF8bdzVD5B': // メルペイ
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/merpay-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
+      
+      case 'cpmt_1RGvMuDP6em8TiNFvXdu275T': // auPay
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/aupay-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
+      
+      case 'cpmt_1RGvMTDP6em8TiNFsBcPSYHB': // d払い
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/dpay-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
+      
+      case 'cpmt_1RGvJlDP6em8TiNFQdcnoGxi': // PayPal
+        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paypal-redirect?product_id=${productId}&price=${productPrice}`;
+        return;
+      
+      default: // Stripe標準の決済方法
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/checkout/success`,
+          },
+        });
+
+      if (error) {
+        if (error.type === "card_error" || error.type === "validation_error") {
+          setMessage(error.message || "決済エラーが発生しました。");
+        } else {
+          setMessage("予期せぬエラーが発生しました。");
+        }
+      }
+      break;
       }
     } catch (error) {
-      console.error("Paidy決済エラー:", error);
-      setMessage("Paidy決済の処理中にエラーが発生しました。");
+      console.error("Payment processing error:", error);
+      setMessage("決済処理中にエラーが発生しました。");
     }
-  } else {
-    // 標準的なStripe決済処理
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/checkout/success`,
-      },
-    });
 
-    if (error) {
-      if (error.type === "card_error" || error.type === "validation_error") {
-        setMessage(error.message || "決済エラーが発生しました。");
-      } else {
-        setMessage("予期せぬエラーが発生しました。");
-      }
-    }
-  }
-
-  setIsLoading(false);
-};
+    setIsLoading(false);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto">
-
-      {/* カード情報の入力フォーム - カード選択時のみ表示 */}
-      {selectedPaymentMethod === "card" && (
-        <>
-          <PaymentElement className="mb-6" />
-          <AddressElement 
-            options={{
-              mode: 'shipping',
-              allowedCountries: ['JP'],
-              fields: {
-                phone: 'always',
-              },
-            }} 
-            className="mb-6" 
-          />
-        </>
-      )}
-
-      {/* Paidyの場合は住所情報のみ取得 */}
-      {selectedPaymentMethod === "paidy" && (
-        <AddressElement 
-          options={{
-            mode: 'shipping',
-            allowedCountries: ['JP'],
-            fields: {
-              phone: 'always',
-            },
-          }} 
-          className="mb-6" 
-        />
-      )}
+      <PaymentElement className="mb-6" />
+      
+      <AddressElement 
+        options={{
+          mode: 'shipping',
+          allowedCountries: ['JP'],
+          fields: {
+            phone: 'always',
+          },
+        }} 
+        className="mb-6" 
+      />
 
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <div className="flex justify-between mb-2">
@@ -231,7 +209,7 @@ const PaymentComponent = ({
     // PaymentIntent作成
     const createPaymentIntent = async () => {
       try {
-        const response = await fetch("/api/payment-intent", {
+        const response = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -259,15 +237,6 @@ const PaymentComponent = ({
     createPaymentIntent();
   }, [session, productId, productPrice]);
 
-  // stripePromiseがnullの場合の処理
-  if (!stripePromise) {
-    return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-        Stripe設定エラー: 環境変数が正しく設定されていません。
-      </div>
-    );
-  }
-
   // エラーがある場合
   if (error) {
     return (
@@ -288,66 +257,64 @@ const PaymentComponent = ({
     clientSecret,
     appearance,
     locale: 'ja',
+    // カスタム決済方法の指定
     customPaymentMethods: [
       {
-        id: '{{cpmt_1RGvICDP6em8TiNFEoCpZ1en}}',
+        id: 'cpmt_1RGvICDP6em8TiNFEoCpZ1en',
         options: {
           type: 'static',
           subtitle: 'Paidyでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvJVDP6em8TiNF4aykL5f9}}',
+        id: 'cpmt_1RGvJVDP6em8TiNF4aykL5f9',
         options: {
           type: 'static',
           subtitle: 'PayPayでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvLxDP6em8TiNF8bdzVD5B}}',
+        id: 'cpmt_1RGvLxDP6em8TiNF8bdzVD5B',
         options: {
           type: 'static',
           subtitle: 'メルペイでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvMuDP6em8TiNFvXdu275T}}',
+        id: 'cpmt_1RGvMuDP6em8TiNFvXdu275T',
         options: {
           type: 'static',
           subtitle: 'auPayでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvMTDP6em8TiNFsBcPSYHB}}',
+        id: 'cpmt_1RGvMTDP6em8TiNFsBcPSYHB',
         options: {
           type: 'static',
           subtitle: 'd払いでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvMuDP6em8TiNFvXdu275T}}',
+        id: 'cpmt_1RGvMhDP6em8TiNFA9gc2Cas',
         options: {
           type: 'static',
           subtitle: '楽天ペイでお支払い',
         }
       },
       {
-        id: '{{cpmt_1RGvJlDP6em8TiNFQdcnoGxi}}',
+        id: 'cpmt_1RGvJlDP6em8TiNFQdcnoGxi',
         options: {
           type: 'static',
           subtitle: 'PayPalでお支払い',
         }
-      },
-
+      }
     ]
   };
 
   return (
     <div className="py-6">
       {clientSecret ? (
-        <Elements stripe={stripePromise}
-        options={options}
-        >
+        <Elements stripe={stripePromise} options={options}>
           <PaymentForm
             productId={productId}
             productName={productName}
