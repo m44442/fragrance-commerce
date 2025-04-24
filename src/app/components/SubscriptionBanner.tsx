@@ -29,7 +29,7 @@ const SubscriptionBanner = () => {
       {/* 詳細情報バナー */}
       <div className="bg-pink-100 p-4 rounded-lg mt-4 text-center">
         <Link href="/subscription" className="text-pink-700 text-sm font-medium">
-          カラリア香りの定期便について詳しく知りたい方はこちら！
+          サブスクリプションに興味のある方はこちら！
         </Link>
       </div>
     </div>

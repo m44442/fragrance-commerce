@@ -137,7 +137,7 @@ const SubscriptionPage = () => {
           初回特典: アトマイザーケース
         </h2>
         <p className="text-gray-600 mb-4">
-          初回購入時に高級アトマイザーケースをプレゼント。お好きな色をお選びください。
+          初回購入時にアトマイザーケースをプレゼント。お好きな色をお選びください。
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {caseOptions.map((caseOption) => (
