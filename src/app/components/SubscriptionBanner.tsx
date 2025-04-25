@@ -9,12 +9,12 @@ const SubscriptionBanner = () => {
       <div className="relative bg-purple-500 text-white p-6 rounded-lg">
         <div className="z-10 relative">
           <h3 className="text-3xl font-bold mb-2">12ヶ月コース</h3>
-          <p className="text-white mb-2 line-through">¥2,390/item</p>
-          <div className="text-2xl font-bold">
-            <span className="text-3xl">¥1,990</span>
-            <span className="text-sm">/item</span>
+          <p className="text-white mb-2">最大<span className="text-5xl font-bold">¥8,640</span> お得！</p>
+          <div className="flex items-center mt-2">
+            <div className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">
+              人気
+            </div>
           </div>
-          <p className="text-white text-sm mt-2">1年で¥4,800以上お得！</p>
         </div>
         
         {/* 右側のイラスト要素 */}

@@ -8,10 +8,24 @@ import Link from "next/link";
 
 // 料金プラン
 const plans = [
-  { id: "MONTHLY", name: "月額プラン", price: 2390, period: "月額" },
-  { id: "QUARTERLY", name: "3ヶ月プラン", price: 2190, period: "月額", discount: "年間¥2,400お得" },
-  { id: "BIANNUAL", name: "半年プラン", price: 2090, period: "月額", discount: "年間¥3,600お得" },
-  { id: "ANNUAL", name: "年間プラン", price: 1990, period: "月額", discount: "年間¥4,800お得" },
+  {
+    id: "MONTHLY",
+    name: "1ヶ月コース",
+    items: [
+      { id: "ITEM1", name: "1itemプラン", price: 2390 },
+      { id: "ITEM2", name: "2itemプラン", price: 3990 },
+      { id: "ITEM3", name: "3itemプラン", price: 5490 }
+    ]
+  },
+  {
+    id: "ANNUAL",
+    name: "12ヶ月コース",
+    items: [
+      { id: "ITEM1", name: "1itemプラン", price: 1990, discount: "年間¥4,800お得" },
+      { id: "ITEM2", name: "2itemプラン", price: 3580, discount: "年間¥4,920お得" },
+      { id: "ITEM3", name: "3itemプラン", price: 4770, discount: "年間¥8,640お得" }
+    ]
+  }
 ];
 
 // ケースのオプション

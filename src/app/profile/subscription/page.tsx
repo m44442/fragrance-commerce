@@ -1,264 +1,294 @@
-// src/app/profile/subscription/page.tsx
+// src/app/subscription/page.tsx
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { format, addDays } from "date-fns";
-import { ja } from "date-fns/locale";
+
+// 料金プラン
+const plans = [
+  {
+    id: "MONTHLY",
+    name: "1ヶ月コース",
+    default: false,
+    items: [
+      { id: "ITEM1", name: "1itemプラン", price: 2390, discount: null },
+      { id: "ITEM2", name: "2itemプラン", price: 3990, discount: null },
+      { id: "ITEM3", name: "3itemプラン", price: 5490, discount: null }
+    ]
+  },
+  {
+    id: "ANNUAL",
+    name: "12ヶ月コース",
+    default: true,
+    popular: true,
+    items: [
+      { id: "ITEM1", name: "1itemプラン", price: 1990, discount: "年間¥4,800お得" },
+      { id: "ITEM2", name: "2itemプラン", price: 3580, discount: "年間¥4,920お得" },
+      { id: "ITEM3", name: "3itemプラン", price: 4770, discount: "年間¥8,640お得" }
+    ]
+  }
+];
+
+// ケースのオプション
+const caseOptions = [
+  { id: "BLACK", name: "ブラック", imageUrl: "/images/case-black.jpg" },
+  { id: "SILVER", name: "シルバー", imageUrl: "/images/case-silver.jpg" },
+];
 
 const SubscriptionPage = () => {
   const { data: session } = useSession();
-  const [subscription, setSubscription] = useState<any>(null);
-  const [deliveries, setDeliveries] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPausing, setIsPausing] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!session?.user?.id) return;
-      
-      try {
-        const response = await fetch(`/api/users/${session.user.id}/subscription`);
-        if (response.ok) {
-          const data = await response.json();
-          setSubscription(data.subscription);
-          setDeliveries(data.deliveries || []);
-        }
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchSubscription();
-  }, [session]);
-  
-  const handlePauseSubscription = async () => {
-    if (!subscription?.id) return;
-    
-    setIsPausing(true);
-    try {
-      const response = await fetch(`/api/subscription/${subscription.id}/pause`, {
-        method: "POST",
-      });
-      
-      if (response.ok) {
-        const updatedSubscription = await response.json();
-        setSubscription(updatedSubscription);
-      }
-    } catch (error) {
-      console.error("Error pausing subscription:", error);
-    } finally {
-      setIsPausing(false);
-    }
-  };
-  
-  const handleResumeSubscription = async () => {
-    if (!subscription?.id) return;
-    
-    setIsPausing(true);
-    try {
-      const response = await fetch(`/api/subscription/${subscription.id}/resume`, {
-        method: "POST",
-      });
-      
-      if (response.ok) {
-        const updatedSubscription = await response.json();
-        setSubscription(updatedSubscription);
-      }
-    } catch (error) {
-      console.error("Error resuming subscription:", error);
-    } finally {
-      setIsPausing(false);
-    }
-  };
-  
-  const handleCancelSubscription = async () => {
-    if (!subscription?.id) return;
-    
-    setIsCancelling(true);
-    try {
-      const response = await fetch(`/api/subscription/${subscription.id}/cancel`, {
-        method: "POST",
-      });
-      
-      if (response.ok) {
-        const updatedSubscription = await response.json();
-        setSubscription(updatedSubscription);
-      }
-    } catch (error) {
-      console.error("Error cancelling subscription:", error);
-    } finally {
-      setIsCancelling(false);
-    }
-  };
-  
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent"></div>
-      </div>
-    );
-  }
-  
-  if (!subscription) {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold mb-6">サブスクリプション</h1>
-        <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-500 mb-4">現在アクティブなサブスクリプションはありません</p>
-          <Link
-            href="/subscription"
-            className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-          >
-            サブスクリプションに登録する
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const router = useRouter();
+  const [selectedPlanType, setSelectedPlanType] = useState("ANNUAL"); // デフォルトで12ヶ月プラン
+  const [selectedItemCount, setSelectedItemCount] = useState("ITEM1"); // デフォルトで1item
+  const [selectedCase, setSelectedCase] = useState(caseOptions[0]); // デフォルトでブラック
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const planName = {
-    MONTHLY: "月額プラン",
-    QUARTERLY: "3ヶ月プラン",
-    BIANNUAL: "半年プラン",
-    ANNUAL: "年間プラン"
-  }[subscription.plan] || "月額プラン";
-  
-  const planPrice = {
-    MONTHLY: 2390,
-    QUARTERLY: 2190,
-    BIANNUAL: 2090,
-    ANNUAL: 1990
-  }[subscription.plan] || 2390;
-  
-  const nextDeliveryDate = subscription.nextDeliveryDate 
-    ? new Date(subscription.nextDeliveryDate) 
-    : null;
+  // 選択中のプランタイプを取得
+  const currentPlanType = plans.find(plan => plan.id === selectedPlanType) || plans[1];
+  // 選択中のアイテム数のプラン詳細を取得
+  const currentItem = currentPlanType.items.find(item => item.id === selectedItemCount) || currentPlanType.items[0];
+
+  const handleSubscribe = async () => {
+    if (!session) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planType: selectedPlanType,
+          itemPlan: selectedItemCount,
+          caseColor: selectedCase.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "サブスクリプションの作成に失敗しました");
+      }
+
+      const data = await response.json();
+      
+      // 支払いページがある場合はリダイレクト
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        router.push("/subscription/success");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">サブスクリプション管理</h1>
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8 text-center">
+        Rumini 香りの定期便
+      </h1>
       
-      <div className="bg-gray-50 rounded-lg p-6 mb-8">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">あなたのプラン: {planName}</h2>
-            <p className="text-gray-500">¥{planPrice.toLocaleString()}/月</p>
-          </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            subscription.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-            subscription.status === 'PAUSED' ? 'bg-orange-100 text-orange-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
-            {
-              subscription.status === 'ACTIVE' ? 'アクティブ' :
-              subscription.status === 'PAUSED' ? '一時停止中' :
-              subscription.status === 'CANCELED' ? '解約済み' : 
-              '期限切れ'
-            }
-          </span>
-        </div>
-        
-        <div className="border-t border-gray-200 pt-4 mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">次回発送予定日</p>
-            <p className="font-medium">
-              {nextDeliveryDate 
-                ? format(nextDeliveryDate, "yyyy年MM月dd日", { locale: ja })
-                : "未定"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">開始日</p>
-            <p className="font-medium">
-              {format(new Date(subscription.startDate), "yyyy年MM月dd日", { locale: ja })}
-            </p>
-          </div>
-        </div>
-        
-        {subscription.status === 'ACTIVE' && (
-          <div className="flex flex-wrap gap-2 mt-6">
-            <button
-              onClick={handlePauseSubscription}
-              disabled={isPausing}
-              className="px-4 py-2 border border-orange-400 text-orange-600 rounded hover:bg-orange-50 transition"
-            >
-              {isPausing ? "処理中..." : "一時停止する"}
-            </button>
-            <button
-              onClick={handleCancelSubscription}
-              disabled={isCancelling}
-              className="px-4 py-2 border border-red-400 text-red-600 rounded hover:bg-red-50 transition"
-            >
-              {isCancelling ? "処理中..." : "解約する"}
-            </button>
-          </div>
-        )}
-        
-        {subscription.status === 'PAUSED' && (
-          <div className="mt-6">
-            <button
-              onClick={handleResumeSubscription}
-              disabled={isPausing}
-              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
-            >
-              {isPausing ? "処理中..." : "サブスクリプションを再開する"}
-            </button>
-          </div>
-        )}
+      <div className="bg-purple-50 rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">サブスクリプションの特典</h2>
+        <ul className="space-y-2">
+          <li className="flex items-start">
+            <span className="text-purple-600 mr-2">✓</span>
+            <span>選んだプランに応じた香水のサンプルをお届け</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-purple-600 mr-2">✓</span>
+            <span>初回特典: 高級アトマイザーケースをプレゼント</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-purple-600 mr-2">✓</span>
+            <span>お気に入りの香水は定価の10%オフで購入可能</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-purple-600 mr-2">✓</span>
+            <span>いつでも解約可能、初月は無料トライアル</span>
+          </li>
+        </ul>
       </div>
       
-      <h2 className="text-xl font-semibold mb-4">配送履歴</h2>
-      
-      {deliveries.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-6 text-center">
-          <p className="text-gray-500">配送履歴はまだありません</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {deliveries.map((delivery) => (
+      {/* コースタイプ選択 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">コース期間</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {plans.map((plan) => (
             <div
-              key={delivery.id}
-              className="border border-gray-200 rounded-lg overflow-hidden"
+              key={plan.id}
+              className={`relative border rounded-lg p-4 cursor-pointer transition ${
+                selectedPlanType === plan.id
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-200 hover:border-purple-300"
+              }`}
+              onClick={() => setSelectedPlanType(plan.id)}
             >
-              <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
-                <div>
-                  <p className="text-sm">
-                    {delivery.status === 'DELIVERED' ? '配送完了' : 
-                     delivery.status === 'SHIPPED' ? '配送中' : 
-                     delivery.status === 'PROCESSING' ? '準備中' : '未発送'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {delivery.shippingDate ? 
-                      `発送日: ${format(new Date(delivery.shippingDate), "yyyy年MM月dd日", { locale: ja })}` : 
-                      `予定発送日: ${format(new Date(delivery.createdAt), "yyyy年MM月dd日", { locale: ja })}`}
-                  </p>
+              {plan.popular && (
+                <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                  <div className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">
+                    人気
+                  </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  delivery.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                  delivery.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                  delivery.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {
-                    delivery.status === 'DELIVERED' ? '配送完了' :
-                    delivery.status === 'SHIPPED' ? '配送中' :
-                    delivery.status === 'PROCESSING' ? '準備中' :
-                    'お届け予定'
-                  }
-                </span>
+              )}
+              <h3 className="font-medium text-lg">{plan.name}</h3>
+              <p className="text-gray-600 text-sm mt-1">
+                {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* アイテム数選択 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">アイテム数選択</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="p-4 border text-left">プラン</th>
+                <th className="p-4 border text-center">1ヶ月コース</th>
+                <th className="p-4 border text-center bg-purple-50">12ヶ月コース</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plans[0].items.map((item, index) => (
+                <tr 
+                  key={item.id}
+                  className={`cursor-pointer ${selectedItemCount === item.id ? "bg-purple-50" : "hover:bg-gray-50"}`}
+                  onClick={() => setSelectedItemCount(item.id)}
+                >
+                  <td className="p-4 border">
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        checked={selectedItemCount === item.id}
+                        onChange={() => setSelectedItemCount(item.id)}
+                        className="mr-2 accent-purple-700"
+                      />
+                      <span>{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 border text-center">¥{plans[0].items[index].price.toLocaleString()}/月</td>
+                  <td className="p-4 border text-center bg-purple-50">
+                    <div>
+                      <div className="font-bold">¥{plans[1].items[index].price.toLocaleString()}/月</div>
+                      {plans[1].items[index].discount && (
+                        <div className="text-green-600 text-xs">{plans[1].items[index].discount}</div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      {/* アトマイザーケース選択 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">
+          初回特典: アトマイザーケース
+        </h2>
+        <p className="text-gray-600 mb-4">
+          初回購入時にアトマイザーケースをプレゼント。お好きな色をお選びください。
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {caseOptions.map((caseOption) => (
+            <div
+              key={caseOption.id}
+              className={`border rounded-lg p-4 cursor-pointer transition ${
+                selectedCase.id === caseOption.id
+                  ? "border-purple-500"
+                  : "border-gray-200 hover:border-purple-300"
+              }`}
+              onClick={() => setSelectedCase(caseOption)}
+            >
+              <div className="h-48 bg-gray-100 rounded mb-3 relative">
+                {/* 実際の実装ではケースの画像を表示 */}
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                  {caseOption.name}のケース画像
+                </div>
               </div>
-              
-              <div className="p-4">
-                <h3 className="font-medium">{delivery.productName}</h3>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  checked={selectedCase.id === caseOption.id}
+                  onChange={() => setSelectedCase(caseOption)}
+                  className="mr-2 accent-purple-700"
+                />
+                <span className="font-medium">{caseOption.name}</span>
               </div>
             </div>
           ))}
         </div>
+      </div>
+      
+      {/* 注文概要 */}
+      <div className="bg-white border rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">注文概要</h2>
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-600">選択コース</span>
+            <span className="font-medium">{currentPlanType.name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">選択プラン</span>
+            <span className="font-medium">{currentItem.name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">月額料金</span>
+            <span className="font-medium">¥{currentItem.price.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">アトマイザーケース</span>
+            <span className="font-medium">{selectedCase.name}</span>
+          </div>
+          <div className="pt-3 border-t">
+            <div className="flex justify-between font-bold">
+              <span>初月料金</span>
+              <span className="text-green-600">¥0（無料トライアル）</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-6">
+          {error}
+        </div>
       )}
+      
+      <div className="flex flex-col space-y-4">
+        <button
+          onClick={handleSubscribe}
+          disabled={isLoading}
+          className="bg-purple-600 text-white py-3 px-6 rounded-lg font-medium disabled:opacity-50"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              処理中...
+            </div>
+          ) : (
+            "今すぐ申し込む"
+          )}
+        </button>
+        
+        <p className="text-center text-gray-500 text-sm">
+          お申し込みには会員登録が必要です。初月は無料でお試しいただけます。いつでも解約可能です。
+        </p>
+      </div>
     </div>
   );
 };
