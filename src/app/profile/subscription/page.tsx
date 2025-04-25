@@ -56,11 +56,12 @@ const SubscriptionPage = () => {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
-
+  
     try {
+      // サブスクリプションAPIを呼び出す
       const response = await fetch("/api/subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,27 +71,29 @@ const SubscriptionPage = () => {
           caseColor: selectedCase.id,
         }),
       });
-
+  
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "サブスクリプションの作成に失敗しました");
       }
-
+  
       const data = await response.json();
       
-      // 支払いページがある場合はリダイレクト
+      // Stripeのチェックアウトページがある場合はリダイレクト
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
+        // すでにサブスクリプションが作成されている場合は成功ページに遷移
         router.push("/subscription/success");
       }
     } catch (err: any) {
+      console.error("Subscription error:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">

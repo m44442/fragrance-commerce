@@ -13,14 +13,6 @@ export async function GET(request: Request) {
   try {
     let filters = [];
     
-    // キーワード検索フィルター
-    if (query) {
-      filters.push(`title[contains]${query}`);
-      filters.push(`brand[contains]${query}`);
-      filters.push(`category[contains]${query}`);
-      filters.push(`description[contains]${query}`);
-    }
-    
     // カテゴリフィルター
     if (categories.length > 0) {
       const categoryFilters = categories.map(category => `category[equals]${category}`);
@@ -44,10 +36,13 @@ export async function GET(request: Request) {
     
     const filterQuery = filters.length > 0 ? filters.join(' [and] ') : '';
     
+    // MicroCMSへのリクエスト
+    // qパラメータによる曖昧検索を使用
     const response = await client.getList({
       endpoint: 'rumini',
       queries: {
-        filters: filterQuery,
+        q: query,             // 曖昧検索のためのqパラメータを設定
+        filters: filterQuery, // フィルターによる絞り込み
         limit: 100,
       },
     });

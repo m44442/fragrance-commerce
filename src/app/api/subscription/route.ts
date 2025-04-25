@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    
+
     // 既存のサブスクリプションをチェック
     const activeSubscription = user.subscriptions.find(sub => 
       sub.status === 'ACTIVE' || sub.status === 'PAUSED'

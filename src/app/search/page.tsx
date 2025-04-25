@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, Filter } from "lucide-react";
+import { Search as SearchIcon, Filter } from "lucide-react";
 
 // 検索フィルターの型定義
 interface SearchFilters {
@@ -61,16 +61,16 @@ const SearchPage = () => {
   
   // 検索処理
   const handleSearch = async () => {
-    if (!searchQuery && !filters.category.length && !filters.brand.length) return;
-    
     setIsLoading(true);
     try {
       const queryParams = new URLSearchParams();
       
-      if (searchQuery) {
-        queryParams.append("q", searchQuery);
+      // 検索クエリが存在する場合は追加
+      if (searchQuery.trim()) {
+        queryParams.append("q", searchQuery.trim());
       }
       
+      // フィルターの追加
       filters.category.forEach(cat => queryParams.append("category", cat));
       filters.brand.forEach(brand => queryParams.append("brand", brand));
       
@@ -92,6 +92,12 @@ const SearchPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // フォーム送信ハンドラー
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch();
   };
   
   // フィルターの更新
@@ -143,7 +149,13 @@ const SearchPage = () => {
         max: null,
       },
     });
+    setSearchQuery("");
   };
+
+  // 初期ロード時に一度検索を実行
+  useEffect(() => {
+    handleSearch();
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -151,21 +163,23 @@ const SearchPage = () => {
       
       {/* 検索バー */}
       <div className="mb-6">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="香水名、ブランド名、香りなどを入力"
-            className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
-          />
-          <button
-            onClick={handleSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-purple-600"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="香水名、ブランド名、香りなどを入力"
+              className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-purple-600"
+            >
+              <SearchIcon className="w-5 h-5" />
+            </button>
+          </div>
+        </form>
       </div>
       
       {/* フィルターとグリッドのレイアウト */}
