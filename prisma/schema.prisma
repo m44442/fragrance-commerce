@@ -313,6 +313,15 @@ model Subscription {
   
   // 次回配送情報
   nextDeliveryDate    DateTime?
+
+    // 配送設定関連
+  deliveryDate        Int?     // 希望配送日（月の中の日にち、1-31）
+  deliveryWeek        Int?     // 希望配送週（月の中の週、1-5）
+  preferCustomSelection Boolean @default(false) // カスタム選択か自動選択か
+  
+  // 支払い情報
+  paymentMethodId     String?  // Stripeの支払い方法ID
+  nextBillingDate     DateTime?
   
   // サブスクリプション履歴
   deliveries          SubscriptionDelivery[]
@@ -332,12 +341,14 @@ model SubscriptionDelivery {
   subscriptionId String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   
-  productId      String?
-  productName    String
-  status         DeliveryStatus @default(PENDING)
+  productId      String?  // 紐づく商品がある場合
+  productName    String   // 商品名（削除された場合も表示できるように保持）
   
+  status         DeliveryStatus @default(PENDING)
   shippingDate   DateTime?
   deliveredDate  DateTime?
+  
+  customSelected Boolean  @default(false) // 顧客が自分で選択したかどうか
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
