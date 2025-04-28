@@ -22,7 +22,7 @@ const plans = [
     id: "ANNUAL",
     name: "12ヶ月コース",
     default: true,
-    popular: true,
+    popular: true, // 人気表示のフラグを追加
     items: [
       { id: "ITEM1", name: "1itemプラン", price: 1990, discount: "年間¥4,800お得" },
       { id: "ITEM2", name: "2itemプラン", price: 3580, discount: "年間¥4,920お得" },
@@ -93,7 +93,7 @@ const SubscriptionPage = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">

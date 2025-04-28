@@ -84,14 +84,66 @@ const CartPage = () => {
     updateCartItem(productId, false);
   };
   
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemoveItem(productId);
-      return;
-    }
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  if (newQuantity <= 0) {
+    handleRemoveItem(productId);
+    return;
+  }
+  
+  // 楽観的UIアップデート（APIレスポンスを待たずに画面を即時更新）
+  setCart(prevCart => {
+    const updatedItems = prevCart.items.map(item => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          quantity: newQuantity
+        };
+      }
+      return item;
+    });
     
-    updateCartItem(productId, true, quantity);
-  };
+    const newTotalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
+    const newTotalPrice = updatedItems.reduce((sum, item) => 
+      sum + (item.product.discountPrice || item.product.price) * item.quantity, 0);
+    
+    return {
+      ...prevCart,
+      items: updatedItems,
+      totalItems: newTotalItems,
+      totalPrice: newTotalPrice
+    };
+  });
+  
+  // APIリクエストを送信して数量を更新
+  setIsUpdating(true);
+  fetch(`/api/cart/${productId}/update-quantity`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantity: newQuantity }),
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to update quantity');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // サーバーからの最新データでカートを更新
+      setCart(data);
+    })
+    .catch(error => {
+      console.error("Error updating cart quantity:", error);
+      
+      // エラー時に元のデータを再取得して表示を元に戻す
+      fetch('/api/cart')
+        .then(response => response.json())
+        .then(data => setCart(data))
+        .catch(err => console.error("Error refreshing cart:", err));
+    })
+    .finally(() => {
+      setIsUpdating(false);
+    });
+};
   
   // チェックアウトボタンクリック時の処理
   const handleCheckout = () => {

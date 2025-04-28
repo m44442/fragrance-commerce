@@ -6,6 +6,7 @@ import { useOptimistic } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import PaymentComponent from "@/components/PaymentComponent"; // 新しく作成するコンポーネントをインポート
+import { useTransition } from "react";
 
 const DetailProduct = () => {
   const params = useParams();
@@ -14,6 +15,7 @@ const DetailProduct = () => {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [showPayment, setShowPayment] = useState(false); // 決済UIの表示制御
   const { data: session } = useSession();
+  const [isPending, startTransition] = useTransition();
   const user: any = session?.user;
 
   const [optimisticLiked, addOptimisticLiked] = useOptimistic(
@@ -65,24 +67,32 @@ const DetailProduct = () => {
   const handleAddToCart = async () => {
     // ログインチェック
     if (!session) {
-      // ログインページにリダイレクト
       window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
       return;
     }
     
-    addOptimisticAddedToCart(!optimisticAddedToCart);
     try {
-      await fetch(`/api/cart/${params?.id}`, {
+      const response = await fetch(`/api/cart/${params?.id}`, {
         method: "POST",
         body: JSON.stringify({ added: !optimisticAddedToCart }),
         headers: {
           "Content-Type": "application/json",
         },
       });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // エラーメッセージを表示
+        alert(`カートに追加できませんでした: ${data.error || response.statusText}`);
+        console.error("カート追加エラー:", data);
+        return;
+      }
+      
       setIsAddedToCart(!optimisticAddedToCart);
     } catch (error) {
       console.error("Error adding to cart:", error);
-      addOptimisticAddedToCart(optimisticAddedToCart);
+      alert("カートに追加できませんでした。もう一度お試しください。");
     }
   };
 

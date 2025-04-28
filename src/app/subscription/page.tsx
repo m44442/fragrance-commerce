@@ -102,24 +102,31 @@ const SubscriptionPage = () => {
       
       {/* コースタイプ選択 */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">コース期間</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative border rounded-lg p-4 cursor-pointer transition ${
-                selectedPlanType === plan.id
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200 hover:border-purple-300"
-              }`}
-              onClick={() => setSelectedPlanType(plan.id)}
-            >
-              <h3 className="font-medium text-lg">{plan.name}</h3>
-              <p className="text-gray-600 text-sm mt-1">
-                {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
-              </p>
+  <h2 className="text-xl font-semibold mb-4">コース期間</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {plans.map((plan) => (
+      <div
+        key={plan.id}
+        className={`relative border rounded-lg p-4 cursor-pointer transition ${
+          selectedPlanType === plan.id
+            ? "border-purple-500 bg-purple-50"
+            : "border-gray-200 hover:border-purple-300"
+        }`}
+        onClick={() => setSelectedPlanType(plan.id)}
+      >
+        {plan.id === "ANNUAL" && (
+          <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+            <div className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full text-2xs font-bold">
+              人気
             </div>
-          ))}
+          </div>
+        )}
+        <h3 className="font-medium text-lg">{plan.name}</h3>
+        <p className="text-gray-600 text-sm mt-1">
+          {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
+        </p>
+      </div>
+    ))}
         </div>
       </div>
       
