@@ -149,3 +149,57 @@ async function createAutoSelectedDelivery(subscriptionId: string) {
     }
   });
 }
+
+// src/app/api/webhooks/stripe/route.ts の一部に追加
+// 支払い失敗時の処理
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const subscription = invoice.subscription as string;
+  if (!subscription) return;
+  
+  // DBのサブスクリプション情報を更新
+  const dbSubscription = await prisma.subscription.findFirst({
+    where: {
+      stripeSubscriptionId: subscription
+    }
+  });
+  
+  if (dbSubscription) {
+    // ユーザーに通知するためのフラグを立てる
+    await prisma.subscription.update({
+      where: {
+        id: dbSubscription.id
+      },
+      data: {
+        // 支払い失敗フラグを立てる (必要に応じてスキーマに追加)
+        paymentFailed: true,
+        // 次回請求日を更新
+        nextBillingDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7日後に再試行
+      }
+    });
+    
+    // ここで通知メールを送信するなどの処理を行う
+  }
+}
+
+// subscription.deleted イベントの処理を追加
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // サブスクリプションIDに基づいてDBのレコードを更新
+  const dbSubscription = await prisma.subscription.findFirst({
+    where: {
+      stripeSubscriptionId: subscription.id
+    }
+  });
+  
+  if (dbSubscription) {
+    await prisma.subscription.update({
+      where: {
+        id: dbSubscription.id
+      },
+      data: {
+        status: 'CANCELED',
+        canceledAt: new Date(),
+        endDate: new Date()
+      }
+    });
+  }
+}

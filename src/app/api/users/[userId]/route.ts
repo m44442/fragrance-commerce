@@ -9,6 +9,8 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
+    // パラメータを非同期で取得する前に変数に格納
+    const userId = params.userId;
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     

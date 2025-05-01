@@ -86,14 +86,14 @@ const OrdersPage = () => {
             </div>
             <div className="p-4">
               <div className="flex items-center">
-                <div className="h-24 w-24 bg-gray-100 rounded relative overflow-hidden mr-4">
-                  <Image
-                    src={purchase.fragrance.thumbnail?.url || "/images/default-product.jpg"}
-                    alt={purchase.fragrance.title}
-                    layout="fill"
-                    objectFit="cover"
-                  />
-                </div>
+              <div className="h-24 w-24 bg-gray-100 rounded relative overflow-hidden mr-4">
+                <Image
+                  src={purchase.fragrance.thumbnail?.url || "/images/default-product.jpg"}
+                  alt={purchase.fragrance.title}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
                 <div>
                   <h3 className="font-medium">{purchase.fragrance.title}</h3>
                   <p className="text-sm text-gray-500">{purchase.fragrance.brand}</p>

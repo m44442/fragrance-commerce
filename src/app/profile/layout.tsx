@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { User, Package, CreditCard, Home, LogOut, Settings } from "lucide-react";
 
@@ -47,8 +47,8 @@ const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
                   <Image
                     src={session?.user?.image || "/images/default-avatar.png"}
                     alt="Profile"
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    style={{ objectFit: "cover" }}
                   />
                 </div>
                 <div>
@@ -84,9 +84,7 @@ const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
                 <li>
                   <button
                     className="flex items-center w-full px-4 py-2 rounded-md hover:bg-gray-50 transition"
-                    onClick={() => {
-                      // ログアウト処理
-                    }}
+                    onClick={() => signOut({ callbackUrl: "/login" })}
                   >
                     <LogOut className="w-5 h-5 mr-3" />
                     <span>ログアウト</span>
