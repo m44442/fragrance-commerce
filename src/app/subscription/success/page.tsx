@@ -34,7 +34,7 @@ const SubscriptionSuccessPage = () => {
         </div>
         <h1 className="text-3xl font-bold mb-4">サブスクリプション登録完了！</h1>
         <p className="text-gray-600 mb-8">
-          Rumini香りの定期便にご登録いただき、ありがとうございます。
+          Ruminiサブスクリプションご登録いただき、ありがとうございます。
           初回発送は30日以内に行われます。アトマイザーケースは初回発送時に同梱されます。
         </p>
         

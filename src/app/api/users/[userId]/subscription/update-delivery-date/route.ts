@@ -8,6 +8,7 @@ export async function POST(
   { params }: { params: { userId: string } }
 ) {
   try {
+    const userId = params.userId;
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
@@ -15,8 +16,28 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { deliveryDate } = await request.json();
+    // リクエストボディをパース
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      // JSON解析エラーハンドリング
+      console.error('JSON parse error:', parseError);
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+    
+    const { deliveryDate } = body;
+    
+    if (!deliveryDate) {
+      return NextResponse.json({ error: 'deliveryDate is required' }, { status: 400 });
+    }
+    
     const deliveryDateObj = new Date(deliveryDate);
+    
+    // 日付のバリデーション
+    if (isNaN(deliveryDateObj.getTime())) {
+      return NextResponse.json({ error: 'Invalid delivery date' }, { status: 400 });
+    }
     
     // サブスクリプションを取得
     const subscription = await prisma.subscription.findFirst({
@@ -58,7 +79,9 @@ export async function POST(
     return NextResponse.json(subscriptionData);
     
   } catch (error) {
-    console.error('Error updating delivery date:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // エラーオブジェクトを安全に扱う
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+    console.error('Error updating delivery date:', errorMessage);
+    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
   }
 }

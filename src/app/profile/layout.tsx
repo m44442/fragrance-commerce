@@ -29,7 +29,7 @@ const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
   const navItems = [
     { id: "profile", label: "プロフィール", icon: User, href: "/profile" },
     { id: "orders", label: "購入履歴", icon: Package, href: "/profile/orders" },
-    { id: "subscription", label: "サブスクリプション", icon: CreditCard, href: "/profile/subscription" },
+    { id: "subscription", label: "サブスクリプション", icon: CreditCard, href: "/profile/subscription" }, // こちらが正しいパスになるよう修正
     { id: "addresses", label: "配送先住所", icon: Home, href: "/profile/addresses" },
     { id: "settings", label: "アカウント設定", icon: Settings, href: "/profile/settings" },
   ];
