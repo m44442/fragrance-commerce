@@ -14,7 +14,7 @@ const navItems = [
 const BottomNavigation = () => {
   return (
     <nav className="fixed bottom-0 w-full max-w-[790px] h-16 bg-white border-t border-gray-100 z-10">
-      <div className="grid grid-cols-5 h-full">
+      <div className="grid grid-cols-4 h-full">
         {/* 通常のナビゲーション項目 */}
         {navItems.slice(0, 2).map((item) => (
           <Link
