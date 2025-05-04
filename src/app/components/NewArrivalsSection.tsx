@@ -1,18 +1,42 @@
 // src/app/components/NewArrivalsSection.tsx
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getAllProducts } from "@/lib/microcms/client";
+import { getNewArrivals } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
-const NewArrivalsSection = async () => {
-  const { contents } = await getAllProducts();
-  
-  // 新着商品のみをフィルタリング (最新5件)
-  const newProducts = contents
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 4);
+const NewArrivalsSection = () => {
+  const [newProducts, setNewProducts] = useState<productType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNewArrivals = async () => {
+      try {
+        const result = await getNewArrivals();
+        setNewProducts(result.contents || []);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch new arrivals:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchNewArrivals();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">新着商品</h2>
+        </div>
+        <div className="flex justify-center py-8">
+          <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-6">
@@ -24,7 +48,7 @@ const NewArrivalsSection = async () => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {newProducts.map((product: productType) => (
+        {newProducts.slice(0, 4).map((product: productType) => (
           <Link key={product.id} href={`/products/${product.id}`} className="block">
             <div className="relative bg-white rounded-lg overflow-hidden shadow-sm">
               {/* 新着バッジ */}
@@ -53,7 +77,7 @@ const NewArrivalsSection = async () => {
               <div className="p-3">
                 <p className="text-xs text-gray-500">{product.brand}</p>
                 <h3 className="text-sm font-medium truncate">{product.title}</h3>
-                <p className="text-xs font-semibold mt-1">¥{product.price.toLocaleString()}</p>
+                <p className="text-xs font-semibold mt-1">¥{product.price?.toLocaleString()}</p>
               </div>
             </div>
           </Link>

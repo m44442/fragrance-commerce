@@ -1,6 +1,9 @@
+// src/app/components/BrandSection.tsx
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getFeaturedBrands } from "@/lib/microcms/client";
 
 // ブランドの型定義
 interface Brand {
@@ -19,50 +22,8 @@ const BrandSection = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        // 実際の実装ではAPIからデータを取得
-        // const response = await fetch('/api/brands/featured');
-        // const data = await response.json();
-        
-        // デモ用のモックデータ
-        const mockData: Brand[] = [
-          { 
-            id: "1", 
-            name: "PARFUM SATORI", 
-            nameJp: "パルファン サトリ", 
-            tagline: "日本の四季文化を香る", 
-            imageUrl: "/images/brand1.jpg" 
-          },
-          { 
-            id: "2", 
-            name: "JO MALONE LONDON", 
-            nameJp: "ジョー マローン ロンドン", 
-            tagline: "王道であり革新的", 
-            imageUrl: "/images/brand2.jpg" 
-          },
-          { 
-            id: "3", 
-            name: "KLOWER PANDOR", 
-            nameJp: "クロワー パンドール", 
-            tagline: "ラグジュアリーな日常を", 
-            imageUrl: "/images/brand3.jpg" 
-          },
-          { 
-            id: "4", 
-            name: "Libroaria", 
-            nameJp: "リブロアリア", 
-            tagline: "読書好きのための香水", 
-            imageUrl: "/images/brand4.jpg" 
-          },
-          { 
-            id: "5", 
-            name: "MUCHA", 
-            nameJp: "ミュシャ", 
-            tagline: "香りでアートを楽しむ", 
-            imageUrl: "/images/brand5.jpg" 
-          },
-        ];
-        
-        setBrands(mockData);
+        const result = await getFeaturedBrands();
+        setBrands(result.contents || []);
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch brands:", error);
@@ -95,13 +56,18 @@ const BrandSection = () => {
               className="flex-shrink-0 w-60 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg overflow-hidden shadow-sm"
             >
               <div className="h-32 bg-gray-200 relative">
-                {/* ブランド画像 */}
-                <div className="w-full h-full bg-gray-200">
-                  {/* 実際の実装では画像を表示 */}
+                {brand.imageUrl ? (
+                  <Image 
+                    src={brand.imageUrl} 
+                    alt={brand.name} 
+                    layout="fill" 
+                    objectFit="cover"
+                  />
+                ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
                     {brand.name}
                   </div>
-                </div>
+                )}
               </div>
               <div className="p-3">
                 <h3 className="text-sm font-bold">{brand.name}</h3>

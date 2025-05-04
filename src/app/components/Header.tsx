@@ -1,24 +1,46 @@
+// src/app/components/Header.tsx
 "use client";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShoppingBag } from "lucide-react";
+import { Search, ShoppingBag, Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const Header = () => {
-  // セッション情報を取得（ログイン状態の確認）
   const { data: session } = useSession();
   const user = session?.user;
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        const response = await fetch(`/api/users/${session.user.id}/subscription`);
+        if (response.ok) {
+          const data = await response.json();
+          setHasActiveSubscription(data.status === 'ACTIVE' || data.status === 'PAUSED');
+        }
+      } catch (error) {
+        console.error("サブスクリプション情報の取得に失敗:", error);
+      }
+    };
+    
+    if (session?.user) {
+      checkSubscriptionStatus();
+    }
+  }, [session]);
 
   return (
     <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
       <div className="flex justify-between items-center p-4">
         {/* ロゴ */}
         <Link href="/" className="flex items-center">
-        <div className="relative h-10 w-10 mr-2">
+          <div className="relative h-10 w-10 mr-2">
             <Image
-              src="/Rumini.jpg" // ロゴ画像のパス
+              src="/Rumini.jpg"
               alt="logo"
-              layout="fill" 
+              layout="fill"
               objectFit="cover"
               className="rounded"
             />
@@ -45,6 +67,13 @@ const Header = () => {
                 src={user.image || "/images/default-avatar.png"}
                 className="rounded-full"
               />
+            </Link>
+          )}
+          
+          {/* サブスクカレンダーアイコン（サブスク加入者のみ表示） */}
+          {hasActiveSubscription && (
+            <Link href="/subscription/calendar" className="text-purple-600">
+              <Calendar className="w-6 h-6" />
             </Link>
           )}
           

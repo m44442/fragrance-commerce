@@ -6,6 +6,8 @@ import PopularRankingSection from "@/components/PopularRankingSection";
 import BrandSection from "@/components/BrandSection";
 import NewArrivalsSection from "@/components/NewArrivalsSection";
 import TrendingRankings from "./components/TrendingRankings";
+import CelebrityFragrancesPage from "./components/CelebrityFragranceSection";
+
 
 export default function Home() {
   return (
@@ -15,6 +17,9 @@ export default function Home() {
       
       {/* カテゴリ検索 */}
       <CategorySection />
+
+      {/* 推し香水セクション (新規追加) */}
+      <CelebrityFragrancesPage />
 
       {/* 人気のランキング */}
       <TrendingRankings />

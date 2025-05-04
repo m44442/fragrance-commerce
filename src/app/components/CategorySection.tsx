@@ -1,3 +1,4 @@
+// src/app/components/CategorySection.tsx
 "use client";
 import React from "react";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import {
   Award, // ランキング用
   Sparkles, // 新着用
   Droplet, // カテゴリ（香りの系統）用
+  Heart, // 推し香水用
 } from "lucide-react";
 
 // カテゴリの定義
@@ -14,13 +16,14 @@ const categories = [
   { id: 2, name: "ランキング", icon: Award, href: "/rankings" },
   { id: 3, name: "新着", icon: Sparkles, href: "/new-arrivals" },
   { id: 4, name: "カテゴリ", icon: Droplet, href: "/categories" },
+  { id: 5, name: "推し香水", icon: Heart, href: "/favorites" },
 ];
 
 const CategorySection = () => {
   return (
     <div className="px-4 py-6">
       <h2 className="text-xl font-bold mb-6">探す</h2>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         {categories.map((category) => (
           <Link
             key={category.id}

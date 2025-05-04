@@ -2,7 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getAllProducts } from "@/lib/microcms/ranking";
+import { getAllProducts } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
 const TrendingRankings = async () => {
