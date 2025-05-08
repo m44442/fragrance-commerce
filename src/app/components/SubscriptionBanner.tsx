@@ -1,12 +1,13 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const SubscriptionBanner = () => {
   return (
     <div className="px-4 py-6">
       {/* メインのサブスクリプションバナー */}
-      <div className="relative bg-purple-500 text-white p-6 rounded-lg">
+      <div className="relative bg-custom-peach text-white p-6 rounded-lg">
         <div className="z-10 relative">
           <h3 className="text-3xl font-bold mb-2">12ヶ月コース</h3>
           <p className="text-white mb-2">最大<span className="text-5xl font-bold">¥8,640</span> お得！</p>
@@ -21,7 +22,13 @@ const SubscriptionBanner = () => {
         <div className="absolute right-4 bottom-0">
           <div className="w-32 h-32">
             {/* ここにイラストまたはユーザーアイコンを配置 */}
-            <div className="h-full w-full rounded-full bg-purple-400 opacity-50"></div>
+            <div className="h-full w-full rounded-full bg-custom-peach-dark opacity-50"></div>
+            <Image 
+            src={"/Rumini.jpg"} 
+            alt={"イラスト"} 
+            width={128} height={128} 
+            className="absolute top-0 left-0 w-full h-full rounded-full">
+            </Image>
           </div>
         </div>
       </div>

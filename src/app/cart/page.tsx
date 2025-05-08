@@ -169,7 +169,7 @@ const CartPage = () => {
           <p className="text-gray-500 mb-4">カートを表示するにはログインが必要です</p>
           <Link
             href={`/login?callbackUrl=${encodeURIComponent("/cart")}`}
-            className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            className="inline-block bg-custom-peach text-white px-4 py-2 rounded-lg hover:bg-custom-peach-dark transition"
           >
             ログイン
           </Link>
@@ -186,7 +186,7 @@ const CartPage = () => {
           <p className="text-gray-500 mb-4">カートに商品がありません</p>
           <Link
             href="/"
-            className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            className="inline-block bg-custom-peach text-white px-4 py-2 rounded-lg hover:bg-custom-peach-dark transition"
           >
             商品を探す
           </Link>
@@ -280,14 +280,14 @@ const CartPage = () => {
           {/* チェックアウトボタン */}
           <button
             onClick={handleCheckout}
-            className="block w-full bg-purple-600 text-white py-3 px-4 rounded-lg text-center font-medium hover:bg-purple-700 transition"
+            className="block w-full bg-custom-peach text-white py-3 px-4 rounded-lg text-center font-medium hover:bg-custom-peach-dark transition"
           >
             レジに進む
           </button>
           
           <Link
             href="/"
-            className="block text-center text-purple-600 hover:underline"
+            className="block text-center text-custom-peach hover:underline"
           >
             買い物を続ける
           </Link>

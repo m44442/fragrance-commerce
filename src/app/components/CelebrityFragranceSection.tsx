@@ -64,7 +64,7 @@ const CelebrityFragrancesPage = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">推し香水コレクション</h1>
         <div className="flex justify-center py-12">
-          <div className="animate-spin h-10 w-10 border-4 border-purple-500 rounded-full border-t-transparent"></div>
+          <div className="animate-spin h-10 w-10 border-4 border-custom-peach rounded-full border-t-transparent"></div>
         </div>
       </div>
     );
@@ -81,7 +81,7 @@ const CelebrityFragrancesPage = () => {
             key={category.id}
             className={`px-4 py-2 rounded-full whitespace-nowrap ${
               selectedCategory === category.id 
-                ? "bg-purple-600 text-white" 
+                ? "bg-custom-peach text-white" 
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => setSelectedCategory(category.id)}
@@ -110,7 +110,7 @@ const CelebrityFragrancesPage = () => {
               )}
               
               {/* 推し名表示のタグ */}
-              <div className="absolute top-4 left-4 bg-purple-500 text-white px-3 py-1 rounded-full flex items-center">
+              <div className="absolute top-4 left-4 bg-custom-peach text-white px-3 py-1 rounded-full flex items-center">
                 <Star className="w-4 h-4 mr-1" />
                 <span className="font-medium">{item.celebrityName}</span>
               </div>
@@ -124,7 +124,7 @@ const CelebrityFragrancesPage = () => {
             <div className="p-4">
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-500">{item.fragranceBrand}</span>
-                <span className="text-sm text-purple-600">{item.celebrityType}</span>
+                <span className="text-sm text-custom-peach">{item.celebrityType}</span>
               </div>
               
               <h2 className="text-lg font-medium mb-2">{item.fragranceName}</h2>
@@ -135,7 +135,7 @@ const CelebrityFragrancesPage = () => {
                 <span className="text-lg font-bold">¥{item.price?.toLocaleString()}</span>
                 <Link 
                   href={`/products/${item.fragranceId}`}
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                  className="bg-custom-peach text-white px-4 py-2 rounded hover:bg-custom-peach-dark"
                 >
                   詳細を見る
                 </Link>

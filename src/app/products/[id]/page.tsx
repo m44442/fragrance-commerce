@@ -1,3 +1,4 @@
+// src/app/products/[id]/page.tsx
 "use client";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import PaymentComponent from "@/components/PaymentComponent";
 import { useTransition } from "react";
-import { Calendar, ShoppingBag } from "lucide-react";
+import { Calendar, ShoppingBag, Droplet, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const DetailProduct = () => {
@@ -90,6 +91,7 @@ const DetailProduct = () => {
       });
     }
   };
+
   const handleAddToCart = async (isSample = false) => {
     if (!session) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
@@ -151,7 +153,8 @@ const DetailProduct = () => {
     router.push(`/subscription/calendar?productId=${params?.id}`);
   };
 
-  const startCheckout = () => {
+  // 単品購入ボタンの処理 - カートに追加してカート画面へ遷移
+  const handleBuyNow = async () => {
     if (!session) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
       return;
@@ -162,7 +165,32 @@ const DetailProduct = () => {
       return;
     }
     
-    setShowPayment(true);
+    try {
+      // カートに追加
+      const response = await fetch(`/api/cart/${params?.id}`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          added: true, 
+          quantity: 1
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        alert(`カートに追加できませんでした: ${data.error || response.statusText}`);
+        console.error("カート追加エラー:", data);
+        return;
+      }
+      
+      // カート画面に遷移
+      router.push('/cart');
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("カートに追加できませんでした。もう一度お試しください。");
+    }
   };
 
   if (!product) {
@@ -222,98 +250,102 @@ const DetailProduct = () => {
               最終更新: {new Date(product.updatedAt as any).toLocaleString()}
             </span>
           </div>
-
-          <div className="mt-4 text-xl font-bold">
-            ¥{product.price?.toLocaleString()}
-          </div>
           
-          <div className="mt-6 grid grid-cols-2 md:flex md:flex-wrap gap-3">
-
-             {/* サブスク加入者用ボタン */}
-            {hasActiveSubscription && (
-              <>
-              {/* カレンダー追加ボタン */}
+          {/* サブスク加入者用エリア */}
+          {hasActiveSubscription ? (
+            <div className="mt-4 space-y-4">
+              {/* サブスクのアクション */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* カレンダー追加ボタン - 左側 */}
                 <button
-                  className="group relative col-span-2 md:col-span-1 md:flex-1 min-w-[140px] px-4 py-3 flex items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-purple-600 hover:to-purple-700 active:scale-95"
+                  className="relative col-span-1 min-w-[140px] py-3 flex items-center justify-center rounded-lg bg-custom-peach text-white font-medium transition-all duration-300 hover:bg-custom-peach-dark active:scale-95"
                   onClick={handleAddToCalendar}
                 >
                   <span className="flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
+                    <Calendar className="w-5 h-5 mr-2" />
                     <span className="text-sm md:text-base">カレンダーに追加</span>
                   </span>
                 </button>
-                {/* お試しサイズボタン */}
+                
+                {/* お試しサイズボタン - 右側 */}
                 <button
-                  className="group relative col-span-2 md:col-span-1 md:flex-1 min-w-[140px] px-4 py-3 flex items-center justify-center rounded-lg bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-teal-600 hover:to-teal-700 active:scale-95"
+                  className="relative col-span-1 min-w-[140px] py-3 flex items-center justify-center rounded-lg bg-teal-600 text-white font-medium transition-all duration-300 hover:bg-teal-700 active:scale-95"
                   onClick={() => handleAddToCart(true)}
                 >
                   <span className="flex items-center">
-                    <ShoppingBag className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
-                    <span className="text-sm md:text-base">お試しサイズ(1.5ml)</span>
+                    <Droplet className="w-5 h-5 mr-2" />
+                    <span className="text-sm md:text-base">お試しサイズ</span>
                   </span>
                 </button>
-                
-                
-              </>
-            )}
-
-
-            {/* カート追加ボタン */}
-            <button
-              className={`group relative col-span-1 md:flex-1 min-w-[140px] px-4 py-3 flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-blue-600 hover:to-blue-700 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed ${
-                optimisticAddedToCart ? "bg-opacity-50" : ""
-              }`}
-              onClick={() => handleAddToCart(false)}
-              disabled={optimisticAddedToCart}
-            >
-              <span className="flex items-center">
-                <ShoppingBag className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
-                <span>カートに追加</span>
-              </span>
-            </button>
-            
-            {/* 今すぐ購入ボタン */}
-            <button
-              className="group relative col-span-1 md:flex-1 min-w-[140px] px-4 py-3 flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-indigo-600 hover:to-indigo-700 active:scale-95"
-              onClick={startCheckout}
-            >
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 transition-transform group-hover:-translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-                <span>今すぐ購入</span>
-              </span>
-            </button>
-            
-           
-            
-            {/* いいねボタンは右下のハートに移動したため、ここから削除 */}
-          </div>
-          
-          {/* サブスク非加入者用バナー */}
-          {!hasActiveSubscription && (
-            <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100 shadow-sm">
-              <div className="flex flex-col md:flex-row items-center justify-between">
-                <div className="mb-4 md:mb-0 md:mr-6">
-                  <h3 className="text-lg font-bold text-purple-800 mb-2">サブスクリプション会員特典</h3>
-                  <p className="text-purple-700">毎月お気に入りの香水が届く！<br className="md:hidden" />お試しサイズ(1.5ml)も一緒に注文すると300円割引！</p>
-                </div>
-                <Link 
-                  href="/subscription" 
-                  className="group relative inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-purple-700 hover:to-indigo-700 active:scale-95"
-                >
-                  <span className="flex items-center">
-                    <span>サブスクリプションを始める</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                </Link>
               </div>
+              
+              {/* 単品購入ボタン - 下段に全幅 */}
+              <button
+                onClick={handleBuyNow}
+                className="relative w-full py-4 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-300 font-medium transition-all duration-300 hover:bg-gray-200 active:scale-95"
+              >
+                <div className="flex items-center">
+                  <span className="font-medium">単品購入</span>
+                  <span className="ml-2 text-lg font-semibold">¥{product.price?.toLocaleString()}</span>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {/* サブスク未加入者用エリア */}
+              {/* サブスクリプションバナー - 画像をそのまま使用 */}
+              <div className="relative rounded-lg overflow-hidden mb-6">
+                {/* バナー画像 */}
+                <Image 
+                  src="/subscription_banner.jpg" 
+                  alt="12ヶ月コースなら年間最大¥8,520お得！" 
+                  width={600}
+                  height={300}
+                  className="w-full rounded-lg"
+                />
+                
+                {/* サブスク開始ボタン */}
+                <button
+                  onClick={() => router.push('/subscription')}
+                  className="mt-4 w-full py-3 flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  <span>このアイテムでサブスクを始める</span>
+                </button>
+                
+                <div className="mt-2 text-center">
+                  <Link href="/subscription" className="text-sm text-[#E9A68D] flex items-center justify-center">
+                    サブスクについてもっとみる
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </div>
+              </div>
+              
+              {/* 単品購入ボタン */}
+              <button
+                onClick={handleBuyNow}
+                className="relative w-full py-4 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-300 font-medium transition-all duration-300 hover:bg-gray-200 active:scale-95"
+              >
+                <div className="flex items-center">
+                  <span className="font-medium">単品購入(専用アトマイザーでお届け)</span>
+                  <span className="ml-2 text-lg font-semibold">¥{product.price?.toLocaleString()}</span>
+                </div>
+              </button>
+              
+              {/* お試しサイズボタン - 未加入者も表示するが、クリック時にサブスク加入を促す */}
+              <button
+                onClick={() => alert("お試しサイズはサブスクリプション会員限定です。サブスクリプションに加入すると利用できます。")}
+                className="relative w-full py-3 flex items-center justify-center rounded-lg border border-teal-600 text-teal-600 font-medium transition-all duration-300 hover:bg-teal-50 active:scale-95"
+              >
+                <span className="flex items-center">
+                  <Droplet className="w-5 h-5 mr-2" />
+                  <span>お試しサイズ</span>
+                </span>
+              </button>
             </div>
           )}
           
-          {/* 決済コンポーネントの表示 (変更なし) */}
+          {/* 決済コンポーネントの表示 */}
           {showPayment && (
             <div className="mt-8 border-t pt-6">
               <PaymentComponent 

@@ -95,22 +95,22 @@ const SubscriptionPage = () => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">
-        Rumini 香りの定期便
+        サブスクリプション
       </h1>
       
       {/* 説明部分は省略 */}
       
       {/* コースタイプ選択 */}
       <div className="mb-8">
-  <h2 className="text-xl font-semibold mb-4">コース期間</h2>
+  <h2 className="text-xl font-semibold mb-4">コース期間を選ぶ</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {plans.map((plan) => (
       <div
         key={plan.id}
         className={`relative border rounded-lg p-4 cursor-pointer transition ${
           selectedPlanType === plan.id
-            ? "border-purple-500 bg-purple-50"
-            : "border-gray-200 hover:border-purple-300"
+            ? "border-custom-peach bg-custom-peach-dark"
+            : "border-custom-peach hover:border-custom-peach-dark"
         }`}
         onClick={() => setSelectedPlanType(plan.id)}
       >
@@ -129,17 +129,21 @@ const SubscriptionPage = () => {
     ))}
         </div>
       </div>
-      
       {/* アイテム数選択 */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">アイテム数選択</h2>
+        <h2 className="text-xl font-semibold mb-4">アイテム数を選ぶ</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
                 <th className="p-4 border text-left">プラン</th>
-                <th className="p-4 border text-center">1ヶ月コース</th>
-                <th className="p-4 border text-center bg-purple-50">12ヶ月コース</th>
+                {/* 選択中のプランタイプによって背景色を変更 */}
+                <th className={`p-4 border text-center ${selectedPlanType === "MONTHLY" ? "bg-custom-peach" : ""}`}>
+                  1ヶ月コース
+                </th>
+                <th className={`p-4 border text-center ${selectedPlanType === "ANNUAL" ? "bg-custom-peach" : ""}`}>
+                  12ヶ月コース
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -155,13 +159,16 @@ const SubscriptionPage = () => {
                         type="radio" 
                         checked={selectedItemCount === item.id}
                         onChange={() => setSelectedItemCount(item.id)}
-                        className="mr-2 accent-purple-700"
+                        className="mr-2 accent-custom-peach"
                       />
                       <span>{item.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 border text-center">¥{plans[0].items[index].price.toLocaleString()}/月</td>
-                  <td className="p-4 border text-center bg-purple-50">
+                  {/* 各セルの背景色も選択中のプランタイプに応じて変更 */}
+                  <td className={`p-4 border text-center ${selectedPlanType === "MONTHLY" ? "bg-custom-peach bg-opacity-70" : ""}`}>
+                    ¥{plans[0].items[index].price.toLocaleString()}/月
+                  </td>
+                  <td className={`p-4 border text-center ${selectedPlanType === "ANNUAL" ? "bg-custom-peach bg-opacity-70" : ""}`}>
                     <div>
                       <div className="font-bold">¥{plans[1].items[index].price.toLocaleString()}/月</div>
                       {plans[1].items[index].discount && (
@@ -216,7 +223,7 @@ const SubscriptionPage = () => {
         <button
           onClick={handleSubscribe}
           disabled={isLoading}
-          className="bg-purple-600 text-white py-3 px-6 rounded-lg font-medium disabled:opacity-50"
+          className="bg-custom-peach text-white py-3 px-6 rounded-lg font-medium disabled:opacity-50"
         >
           {isLoading ? (
             <div className="flex items-center justify-center">

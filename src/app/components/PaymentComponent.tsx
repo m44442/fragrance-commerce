@@ -170,7 +170,7 @@ const PaymentForm = ({
 
       <button
         disabled={isLoading || !stripe || !elements}
-        className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium disabled:opacity-50"
+        className="w-full bg-custom-peach text-white py-3 px-4 rounded-lg font-medium disabled:opacity-50"
       >
         {isLoading ? "処理中..." : "今すぐ支払う"}
       </button>

@@ -26,7 +26,7 @@ const PaymentMethodsPage = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent"></div>
+        <div className="animate-spin h-8 w-8 border-4 border-custom-peach rounded-full border-t-transparent"></div>
       </div>
     );
   }
@@ -39,7 +39,7 @@ const PaymentMethodsPage = () => {
         <div className="bg-gray-50 p-6 rounded-lg text-center">
           <p className="text-gray-500 mb-4">登録されている支払い方法はありません</p>
           <button
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+            className="bg-custom-peach text-white px-4 py-2 rounded-lg"
           >
             支払い方法を追加
           </button>
@@ -74,7 +74,7 @@ const PaymentMethodsPage = () => {
           </div>
           
           <button
-            className="w-full bg-purple-600 text-white py-2 rounded-lg"
+            className="w-full bg-custom-peach text-white py-2 rounded-lg"
           >
             支払い方法を追加
           </button>
