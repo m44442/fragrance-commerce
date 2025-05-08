@@ -1,10 +1,10 @@
-// src/app/subscription/page.tsx の修正版
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { client } from "@/lib/microcms/client";
 
 // 料金プラン
 const plans = [
@@ -30,11 +30,13 @@ const plans = [
   }
 ];
 
-// ケースのオプション
-const caseOptions = [
-  { id: "BLACK", name: "ブラック", imageUrl: "/images/case-black.jpg" },
-  { id: "SILVER", name: "シルバー", imageUrl: "/images/case-silver.jpg" },
-];
+// アトマイザーケース型定義
+interface AtomizerCase {
+  id: string;
+  name: string;
+  color: string;
+  imageUrl: string;
+}
 
 const SubscriptionPage = () => {
   const { data: session } = useSession();
@@ -43,18 +45,82 @@ const SubscriptionPage = () => {
   // プランタイプとアイテム数を別々に管理
   const [selectedPlanType, setSelectedPlanType] = useState("ANNUAL"); // デフォルトで12ヶ月プラン
   const [selectedItemCount, setSelectedItemCount] = useState("ITEM1"); // デフォルトで1item
-  const [selectedCase, setSelectedCase] = useState(caseOptions[0]); // デフォルトでブラック
+  const [atomizerCases, setAtomizerCases] = useState<AtomizerCase[]>([]);
+  const [selectedCase, setSelectedCase] = useState<string>(""); // 初期値は空文字列にして、データ取得後に設定
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 選択中のプランタイプを取得
+  // microCMSからアトマイザーケース情報を取得
+  useEffect(() => {
+    const fetchAtomizerCases = async () => {
+      try {
+        // microCMSからアトマイザーケースを取得
+        // エンドポイント名はmicroCMSの設定に合わせて変更してください
+        const response = await client.getList({
+          endpoint: 'atomizer_cases',
+          queries: { filters: 'isActive[equals]true' } // 有効なケースのみ取得
+        });
+        
+        if (response.contents && response.contents.length > 0) {
+          const cases = response.contents.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            color: item.color,
+            imageUrl: item.image?.url || '/Rumini.jpg' // 画像URLがない場合はデフォルト画像
+          }));
+          
+          // 表示順でソート（もしmicroCMSのdisplayOrderフィールドがある場合）
+          cases.sort((a: any, b: any) => {
+            return (a.displayOrder || 999) - (b.displayOrder || 999);
+          });
+          
+          setAtomizerCases(cases);
+          // 最初のケースをデフォルト選択
+          if (cases.length > 0) {
+            setSelectedCase(cases[0].id);
+          }
+        } else {
+          // microCMSにデータがない場合はフォールバックデータを使用
+          const fallbackCases = [
+            { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/Rumini.jpg" },
+            { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/Rumini.jpg" },
+          ];
+          setAtomizerCases(fallbackCases);
+          setSelectedCase(fallbackCases[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching atomizer cases:", error);
+        // エラー時もフォールバックデータを使用
+        const fallbackCases = [
+          { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/Rumini.jpg" },
+          { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/Rumini.jpg" },
+        ];
+        setAtomizerCases(fallbackCases);
+        setSelectedCase(fallbackCases[0].id);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+
+    fetchAtomizerCases();
+  }, []);
+
+  // 現在選択されているプランの情報を取得
   const currentPlanType = plans.find(plan => plan.id === selectedPlanType) || plans[1];
   // 選択中のアイテム数のプラン詳細を取得
   const currentItem = currentPlanType.items.find(item => item.id === selectedItemCount) || currentPlanType.items[0];
+  // 選択されたケースを取得
+  const currentCase = atomizerCases.find(c => c.id === selectedCase);
 
   const handleSubscribe = async () => {
     if (!session) {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+
+    if (!selectedCase) {
+      setError("アトマイザーケースを選択してください");
       return;
     }
 
@@ -68,7 +134,7 @@ const SubscriptionPage = () => {
         body: JSON.stringify({
           planType: selectedPlanType,
           itemPlan: selectedItemCount,
-          caseColor: selectedCase.id,
+          caseColor: selectedCase,
         }),
       });
 
@@ -92,6 +158,14 @@ const SubscriptionPage = () => {
     }
   };
 
+  if (isDataLoading) {
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin h-10 w-10 border-4 border-custom-peach rounded-full border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">
@@ -102,33 +176,34 @@ const SubscriptionPage = () => {
       
       {/* コースタイプ選択 */}
       <div className="mb-8">
-  <h2 className="text-xl font-semibold mb-4">コース期間を選ぶ</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {plans.map((plan) => (
-      <div
-        key={plan.id}
-        className={`relative border rounded-lg p-4 cursor-pointer transition ${
-          selectedPlanType === plan.id
-            ? "border-custom-peach bg-custom-peach-dark"
-            : "border-custom-peach hover:border-custom-peach-dark"
-        }`}
-        onClick={() => setSelectedPlanType(plan.id)}
-      >
-        {plan.id === "ANNUAL" && (
-          <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
-            <div className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full text-2xs font-bold">
-              人気
+        <h2 className="text-xl font-semibold mb-4">コース期間を選ぶ</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`relative border rounded-lg p-4 cursor-pointer transition ${
+                selectedPlanType === plan.id
+                  ? "border-custom-peach bg-custom-peach-dark"
+                  : "border-custom-peach hover:border-custom-peach-dark"
+              }`}
+              onClick={() => setSelectedPlanType(plan.id)}
+            >
+              {plan.id === "ANNUAL" && (
+                <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                  <div className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full text-2xs font-bold">
+                    人気
+                  </div>
+                </div>
+              )}
+              <h3 className="font-medium text-lg">{plan.name}</h3>
+              <p className="text-gray-600 text-sm mt-1">
+                {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
+              </p>
             </div>
-          </div>
-        )}
-        <h3 className="font-medium text-lg">{plan.name}</h3>
-        <p className="text-gray-600 text-sm mt-1">
-          {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
-        </p>
-      </div>
-    ))}
+          ))}
         </div>
       </div>
+      
       {/* アイテム数選択 */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">アイテム数を選ぶ</h2>
@@ -183,7 +258,42 @@ const SubscriptionPage = () => {
         </div>
       </div>
       
-      {/* ケース選択とその他の部分は変更なし */}
+      {/* アトマイザーケース選択 - microCMSから取得したデータを表示 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">アトマイザーケース選択</h2>
+        <p className="text-gray-600 mb-4">初回特典として香水用アトマイザーケースをお届けします。お好きな色をお選びください。</p>
+        
+        <div className="grid grid-cols-2 gap-4">
+          {atomizerCases.map((caseItem) => (
+            <div 
+              key={caseItem.id}
+              className={`border p-4 rounded-lg cursor-pointer ${
+                selectedCase === caseItem.id ? "border-black bg-gray-50" : "hover:bg-gray-50"
+              }`}
+              onClick={() => setSelectedCase(caseItem.id)}
+            >
+              <div className="flex items-center mb-2">
+                <input 
+                  type="radio" 
+                  checked={selectedCase === caseItem.id} 
+                  onChange={() => setSelectedCase(caseItem.id)}
+                  className="mr-2"
+                />
+                <span className="font-medium">{caseItem.name}</span>
+              </div>
+              <div className="flex justify-center">
+                <Image 
+                  src={caseItem.imageUrl} 
+                  alt={caseItem.name} 
+                  width={100} 
+                  height={160} 
+                  className="object-contain h-40"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       
       {/* 注文概要 */}
       <div className="bg-white border rounded-lg p-6 mb-8">
@@ -203,7 +313,7 @@ const SubscriptionPage = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">アトマイザーケース</span>
-            <span className="font-medium">{selectedCase.name}</span>
+            <span className="font-medium">{currentCase?.name || "選択してください"}</span>
           </div>
           <div className="pt-3 border-t">
             <div className="flex justify-between font-bold">
@@ -222,7 +332,7 @@ const SubscriptionPage = () => {
       <div className="flex flex-col space-y-4">
         <button
           onClick={handleSubscribe}
-          disabled={isLoading}
+          disabled={isLoading || !selectedCase}
           className="bg-custom-peach text-white py-3 px-6 rounded-lg font-medium disabled:opacity-50"
         >
           {isLoading ? (

@@ -58,6 +58,7 @@ model User {
   purchases        Purchase[]
   sessions         Session[]
   subscriptions    Subscription[]
+  reviews          Review[]
 
   @@map("users")
 }
@@ -103,6 +104,7 @@ model Product {
   purchaseHistory   PurchaseHistory[]
   purchases         Purchase[]
   themeProducts     ThemeProduct[]
+  reviews           Review[]
 
   @@index([brandId])
   @@map("products")
@@ -304,6 +306,27 @@ model SubscriptionDelivery {
 
   @@map("subscription_deliveries")
 }
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5の星評価
+  comment     String?  // レビューコメント（任意）
+  userId      String
+  productId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isVerified  Boolean  @default(false) // 購入検証済みフラグ
+  helpfulCount Int     @default(0)     // 「参考になった」の数
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // 1ユーザー1商品につき1レビュー
+  @@index([productId])
+  @@index([userId])
+  @@map("reviews")
+}
+
 
 enum SubscriptionStatus {
   ACTIVE

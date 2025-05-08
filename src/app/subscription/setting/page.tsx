@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, CreditCard, Package, Pause, Play, Settings, CheckCircle } from "lucide-react";
+import { Calendar, CreditCard, Package, Pause, Play, Settings, CheckCircle, XCircle } from "lucide-react";
 
 const SubscriptionSettingPage = () => {
   const router = useRouter();
@@ -253,17 +253,28 @@ const SubscriptionSettingPage = () => {
           </div>
         </div>
         
-        {/* サブスクリプション操作ボタン */}
-        <div className="flex flex-col sm:flex-row gap-3">
+       {/* サブスクリプション操作ボタン */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
           {subscription.status === 'ACTIVE' ? (
-            <button
-              onClick={pauseSubscription}
-              disabled={isProcessing}
-              className="px-4 py-2 border border-yellow-500 text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors disabled:opacity-50 flex items-center justify-center"
-            >
-              <Pause className="w-4 h-4 mr-2" />
-              一時停止する
-            </button>
+            <>
+              <button
+                onClick={pauseSubscription}
+                disabled={isProcessing}
+                className="px-4 py-2 border border-yellow-500 text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors disabled:opacity-50 flex items-center justify-center"
+              >
+                <Pause className="w-4 h-4 mr-2" />
+                一時停止する
+              </button>
+              
+              {/* キャンセル（解約）へのリンクを追加 */}
+              <Link 
+                href="/subscription/cancel" 
+                className="px-4 py-2 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                解約する
+              </Link>
+            </>
           ) : subscription.status === 'PAUSED' ? (
             <button
               onClick={resumeSubscription}
@@ -284,6 +295,8 @@ const SubscriptionSettingPage = () => {
           </Link>
         </div>
       </div>
+      
+      {/* おまかせ配送設定 */}
       
       {/* カレンダー自動追加設定 */}
       <div className="bg-white border rounded-lg p-6 mb-8 shadow-sm">

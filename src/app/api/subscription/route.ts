@@ -24,14 +24,14 @@ const PLAN_PRICES = {
 // Stripeの料金ID (実際の環境で設定)
 const STRIPE_PRICE_IDS = {
   MONTHLY: {
-    ITEM1: process.env.STRIPE_MONTHLY_ITEM1_PRICE_ID || 'price_monthly_item1',
-    ITEM2: process.env.STRIPE_MONTHLY_ITEM2_PRICE_ID || 'price_monthly_item2',
-    ITEM3: process.env.STRIPE_MONTHLY_ITEM3_PRICE_ID || 'price_monthly_item3'
+    ITEM1: process.env.STRIPE_MONTHLY_ITEM1_PRICE_ID,
+    ITEM2: process.env.STRIPE_MONTHLY_ITEM2_PRICE_ID,
+    ITEM3: process.env.STRIPE_MONTHLY_ITEM3_PRICE_ID
   },
   ANNUAL: {
-    ITEM1: process.env.STRIPE_ANNUAL_ITEM1_PRICE_ID || 'price_annual_item1',
-    ITEM2: process.env.STRIPE_ANNUAL_ITEM2_PRICE_ID || 'price_annual_item2',
-    ITEM3: process.env.STRIPE_ANNUAL_ITEM3_PRICE_ID || 'price_annual_item3'
+    ITEM1: process.env.STRIPE_ANNUAL_ITEM1_PRICE_ID,
+    ITEM2: process.env.STRIPE_ANNUAL_ITEM2_PRICE_ID,
+    ITEM3: process.env.STRIPE_ANNUAL_ITEM3_PRICE_ID
   }
 };
 
