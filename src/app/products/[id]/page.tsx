@@ -8,8 +8,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import PaymentComponent from "@/components/PaymentComponent";
 import { useTransition } from "react";
-import { Calendar, ShoppingBag, Droplet, Plus, ArrowRight } from "lucide-react";
+import { Calendar, ShoppingBag, Droplet, Plus, ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
+import ReviewForm from "@/components/ReviewForm";
+import ReviewList from "@/components/ReviewList";
 
 const DetailProduct = () => {
   const params = useParams();
@@ -23,6 +25,13 @@ const DetailProduct = () => {
   const { data: session } = useSession();
   const [isPending, startTransition] = useTransition();
   const user: any = session?.user;
+
+  // レビュー関連の状態
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [userReview, setUserReview] = useState<any>(null);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   const [optimisticLiked, addOptimisticLiked] = useOptimistic(
     isLiked,
@@ -61,6 +70,70 @@ const DetailProduct = () => {
     if (session?.user) {
       checkSubscriptionStatus();
     }
+  }, [params?.id, session]);
+
+  // 商品のいいね状態を確認
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!session?.user?.id || !params?.id) return;
+      
+      try {
+        const response = await fetch(`/api/like/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsLiked(data.liked);
+        }
+      } catch (error) {
+        console.error("いいね状態の確認に失敗:", error);
+      }
+    };
+    
+    checkLikeStatus();
+  }, [params?.id, session]);
+
+  // レビュー一覧を取得
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!params?.id) return;
+      
+      // 商品IDを取得 (MicroCMS IDかPrisma IDかを判断)
+      const productId = typeof params.id === 'string' ? params.id : '';
+      console.log("Fetching reviews for product ID:", productId);
+      
+      setIsLoadingReviews(true);
+      try {
+        const response = await fetch(`/api/products/${productId}/reviews`);
+        
+        // レスポンスのステータスコードをログ出力
+        console.log("Review fetch response status:", response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched reviews:", data);
+          setReviews(data.reviews || []);
+          
+          // ユーザー自身のレビューを探す
+          if (session?.user?.id) {
+            const userReview = data.reviews.find((review: any) => review.userId === session.user.id);
+            setUserReview(userReview || null);
+            
+            // 自分のレビューがある場合はフォームを表示
+            if (userReview) {
+              setShowReviewForm(true);
+            }
+          }
+        } else {
+          const errorData = await response.json();
+          console.error("Review fetch error:", errorData);
+        }
+      } catch (error) {
+        console.error("レビュー取得に失敗:", error);
+      } finally {
+        setIsLoadingReviews(false);
+      }
+    };
+    
+    fetchReviews();
   }, [params?.id, session]);
 
   const handleLike = async () => {
@@ -193,8 +266,69 @@ const DetailProduct = () => {
     }
   };
 
+  // レビュー提出後の処理
+  const handleReviewSubmitted = async () => {
+    if (!params?.id) return;
+    
+    // レビュー一覧を再取得
+    try {
+      const response = await fetch(`/api/products/${params.id}/reviews`);
+      if (response.ok) {
+        const data = await response.json();
+        setReviews(data.reviews || []);
+        
+        // ユーザー自身のレビューを探す
+        if (session?.user?.id) {
+          const userReview = data.reviews.find((review: any) => review.userId === session.user.id);
+          setUserReview(userReview || null);
+        }
+      }
+    } catch (error) {
+      console.error("レビュー再取得に失敗:", error);
+    }
+  };
+
+  // 「参考になった」ボタンの処理
+  const handleMarkHelpful = async (reviewId: string) => {
+    if (!session?.user?.id) {
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/products/${params?.id}/reviews`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviewId,
+          helpful: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark review as helpful');
+      }
+
+      // この部分は実装によっては不要かもしれません（ReviewListコンポーネント内で楽観的更新を行っているため）
+      const updatedReviews = reviews.map(review => {
+        if (review.id === reviewId) {
+          return { ...review, helpfulCount: review.helpfulCount + 1 };
+        }
+        return review;
+      });
+
+      setReviews(updatedReviews);
+    } catch (error) {
+      console.error('Error marking review as helpful:', error);
+    }
+  };
+
   if (!product) {
-    return <div>Loading...</div>;
+    return <div className="container mx-auto p-4 flex justify-center items-center min-h-[60vh]">
+      <div className="animate-pulse text-gray-500">商品情報を読み込み中...</div>
+    </div>;
   }
 
   return (
@@ -236,24 +370,57 @@ const DetailProduct = () => {
         </div>
         
         <div className="p-6">
-          <h2 className="text-2xl font-bold">{product.title}</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-bold">{product.title}</h2>
+            
+            {/* 評価サマリーを表示 */}
+            {product.averageRating && (
+              <div className="flex items-center">
+                <div className="flex items-center mr-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      fill={star <= Math.round(product.averageRating) ? '#FFB800' : 'none'}
+                      stroke="#FFB800"
+                      className="w-5 h-5"
+                    />
+                  ))}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">{product.averageRating.toFixed(1)}</span>
+                  <span className="mx-1">·</span>
+                  <button 
+                    onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-[#E9A68D] hover:underline"
+                  >
+                    {product.reviewCount || reviews.length}件のレビュー
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <p className="text-gray-700 mb-2">
+            <span className="font-medium">{product.brand}</span>
+          </p>
+          
           <div
-            className="text-gray-700 mt-2"
+            className="text-gray-700 mt-4"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
 
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-sm text-gray-500">
-              公開日: {new Date(product.publishedAt as any).toLocaleString()}
+          <div className="flex justify-between items-center mt-6 text-sm text-gray-500">
+            <span>
+              公開日: {new Date(product.publishedAt).toLocaleDateString()}
             </span>
-            <span className="text-sm text-gray-500">
-              最終更新: {new Date(product.updatedAt as any).toLocaleString()}
+            <span>
+              最終更新: {new Date(product.updatedAt).toLocaleDateString()}
             </span>
           </div>
           
           {/* サブスク加入者用エリア */}
           {hasActiveSubscription ? (
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-4">
               {/* サブスクのアクション */}
               <div className="grid grid-cols-2 gap-4">
                 {/* カレンダー追加ボタン - 左側 */}
@@ -291,7 +458,7 @@ const DetailProduct = () => {
               </button>
             </div>
           ) : (
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-4">
               {/* サブスク未加入者用エリア */}
               {/* サブスクリプションバナー - 画像をそのまま使用 */}
               <div className="relative rounded-lg overflow-hidden mb-6">
@@ -357,10 +524,119 @@ const DetailProduct = () => {
               />
             </div>
           )}
+          
+          {/* 商品詳細情報セクション */}
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">商品詳細</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-500">ブランド</h4>
+                  <p>{product.brand}</p>
+                </div>
+                
+                {product.volume && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">容量</h4>
+                    <p>{product.volume}ml</p>
+                  </div>
+                )}
+                
+                {product.concentration && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">濃度</h4>
+                    <p>{product.concentration}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                {product.topNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">トップノート</h4>
+                    <p>{product.topNotes}</p>
+                  </div>
+                )}
+                
+                {product.middleNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">ミドルノート</h4>
+                    <p>{product.middleNotes}</p>
+                  </div>
+                )}
+                
+                {product.baseNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">ベースノート</h4>
+                    <p>{product.baseNotes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* レビューセクション */}
+          <div id="reviews-section" className="mt-8 border-t pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">カスタマーレビュー</h3>
+              
+              {session?.user && !userReview && !showReviewForm && (
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="text-sm text-[#E9A68D] hover:underline"
+                >
+                  レビューを書く
+                </button>
+              )}
+            </div>
+            
+            {showReviewForm && session?.user && (
+              <ReviewForm
+                productId={product.id || (params?.id as string)}
+                onReviewSubmitted={handleReviewSubmitted}
+                existingReview={userReview}
+              />
+            )}
+            
+            {isLoadingReviews ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">レビューを読み込み中...</p>
+              </div>
+            ) : (
+              <ReviewList
+                reviews={reviewsExpanded ? reviews : reviews.slice(0, 3)}
+                currentUserId={session?.user?.id}
+                userReviewId={userReview?.id}
+                onMarkHelpful={handleMarkHelpful}
+              />
+            )}
+            
+            {reviews.length > 3 && !reviewsExpanded && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => setReviewsExpanded(true)}
+                  className="text-[#E9A68D] hover:underline"
+                >
+                  すべてのレビューを表示 ({reviews.length}件)
+                </button>
+              </div>
+            )}
+            
+            {reviews.length > 3 && reviewsExpanded && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => setReviewsExpanded(false)}
+                  className="text-gray-500 hover:underline"
+                >
+                  レビューを折りたたむ
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default DetailProduct;
+}
+export default DetailProduct;  
