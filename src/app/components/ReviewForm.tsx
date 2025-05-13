@@ -1,5 +1,5 @@
-// src/components/ReviewForm.tsx
-import React, { useState } from 'react';
+// src/components/ReviewForm.tsx を修正
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 
 interface ReviewFormProps {
@@ -41,7 +41,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     }
 
     try {
-      console.log(`Submitting review to: /api/products/${productId}/reviews`);
+      console.log(`Submitting review to: /api/products/${productId}/reviews with rating:`, rating);
       
       const response = await fetch(`/api/products/${productId}/reviews`, {
         method: 'POST',
@@ -54,13 +54,15 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         console.error('Error response:', data);
         throw new Error(data.error || '口コミの投稿に失敗しました');
       }
 
+      const data = await response.json();
+      console.log('Review submission successful:', data);
+      
       setSuccess(data.message || '口コミを投稿しました。ありがとうございます！');
       if (!existingReview) {
         setRating(0);
@@ -95,12 +97,14 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         method: 'DELETE',
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.error || '口コミの削除に失敗しました');
       }
 
+      const data = await response.json();
+      console.log('Review deletion successful:', data);
+      
       setSuccess('口コミを削除しました');
       setRating(0);
       setComment('');

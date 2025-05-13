@@ -117,10 +117,8 @@ const DetailProduct = () => {
             const userReview = data.reviews.find((review: any) => review.userId === session.user.id);
             setUserReview(userReview || null);
             
-            // 自分のレビューがある場合はフォームを表示
-            if (userReview) {
-              setShowReviewForm(true);
-            }
+            // レビューフォームの表示状態を更新
+            setShowReviewForm(!!userReview);
           }
         } else {
           const errorData = await response.json();
@@ -133,9 +131,35 @@ const DetailProduct = () => {
       }
     };
     
-    fetchReviews();
+    if (session?.user) {
+      fetchReviews();
+    } else {
+      // ログインしていない場合も、公開レビューは取得
+      fetchReviews();
+    }
   }, [params?.id, session]);
 
+  // レビュー提出後の処理
+  const handleReviewSubmitted = async () => {
+    if (!params?.id) return;
+    
+    // レビュー一覧を再取得
+    try {
+      const response = await fetch(`/api/products/${params.id}/reviews`);
+      if (response.ok) {
+        const data = await response.json();
+        setReviews(data.reviews || []);
+        
+        // ユーザー自身のレビューを探す
+        if (session?.user?.id) {
+          const userReview = data.reviews.find((review: any) => review.userId === session.user.id);
+          setUserReview(userReview || null);
+        }
+      }
+    } catch (error) {
+      console.error("レビュー再取得に失敗:", error);
+    }
+  };
   const handleLike = async () => {
     if (!session) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
@@ -263,28 +287,6 @@ const DetailProduct = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("カートに追加できませんでした。もう一度お試しください。");
-    }
-  };
-
-  // レビュー提出後の処理
-  const handleReviewSubmitted = async () => {
-    if (!params?.id) return;
-    
-    // レビュー一覧を再取得
-    try {
-      const response = await fetch(`/api/products/${params.id}/reviews`);
-      if (response.ok) {
-        const data = await response.json();
-        setReviews(data.reviews || []);
-        
-        // ユーザー自身のレビューを探す
-        if (session?.user?.id) {
-          const userReview = data.reviews.find((review: any) => review.userId === session.user.id);
-          setUserReview(userReview || null);
-        }
-      }
-    } catch (error) {
-      console.error("レビュー再取得に失敗:", error);
     }
   };
 
