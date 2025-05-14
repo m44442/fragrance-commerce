@@ -313,7 +313,6 @@ const DetailProduct = () => {
         throw new Error('Failed to mark review as helpful');
       }
 
-      // この部分は実装によっては不要かもしれません（ReviewListコンポーネント内で楽観的更新を行っているため）
       const updatedReviews = reviews.map(review => {
         if (review.id === reviewId) {
           return { ...review, helpfulCount: review.helpfulCount + 1 };
@@ -332,6 +331,11 @@ const DetailProduct = () => {
       <div className="animate-pulse text-gray-500">商品情報を読み込み中...</div>
     </div>;
   }
+
+  // 平均評価を計算（レビューがない場合は0）
+  const averageRating = product.averageRating || (reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : 0);
 
   return (
     <div className="container mx-auto p-4">
@@ -374,42 +378,51 @@ const DetailProduct = () => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-bold">{product.title}</h2>
-            
-            {/* 評価サマリーを表示 */}
-            {product.averageRating && (
-              <div className="flex items-center">
-                <div className="flex items-center mr-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      fill={star <= Math.round(product.averageRating) ? '#FFB800' : 'none'}
-                      stroke="#FFB800"
-                      className="w-5 h-5"
-                    />
-                  ))}
-                </div>
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold">{product.averageRating.toFixed(1)}</span>
-                  <span className="mx-1">·</span>
-                  <button 
-                    onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="text-[#E9A68D] hover:underline"
-                  >
-                    {product.reviewCount || reviews.length}件のレビュー
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
           
           <p className="text-gray-700 mb-2">
-            <span className="font-medium">{product.brand}</span>
+            <Link 
+              href={`/brands/${product.brandId || product.brand}`} 
+              className="font-medium text-purple-700 hover:underline"
+            >
+              {product.brand}
+            </Link>
           </p>
           
+          {/* 特別価格表示エリア（microCMSで設定している場合のみ表示） */}
+          {product.specialPrice && (
+            <div className="grid grid-cols-6">
+              <div className="mt-3 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="flex justify-center text-gray-700 font-medium">+¥{product.specialPrice}</p>
+            </div>
+            </div>
+          )}
+          
           <div
-            className="text-gray-700 mt-4"
+            className="text-gray-700 mt-4 mb-6"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
+
+          {/* Amazon風の評価 */}
+          {averageRating > 0 && (
+            <button
+              onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center mb-3 bg-white hover:bg-gray-50 transition-colors px-2 py-1 rounded-lg border border-gray-100 shadow-sm"
+            >
+              <span className="font-bold text-lg mr-1">{averageRating.toFixed(1)}</span>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    fill={star <= Math.round(averageRating) ? '#FFB800' : 'none'}
+                    stroke="#FFB800"
+                    className="w-4 h-4"
+                  />
+                ))}
+              </div>
+              <span className="ml-1 text-xs text-gray-700">({reviews.length})</span>
+            </button>
+          )}
 
           <div className="flex justify-between items-center mt-6 text-sm text-gray-500">
             <span>
@@ -424,10 +437,9 @@ const DetailProduct = () => {
           {hasActiveSubscription ? (
             <div className="mt-6 space-y-4">
               {/* サブスクのアクション */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* カレンダー追加ボタン - 左側 */}
+              {/* カレンダー追加ボタン - 左側 */}
                 <button
-                  className="relative col-span-1 min-w-[140px] py-3 flex items-center justify-center rounded-lg bg-custom-peach text-white font-medium transition-all duration-300 hover:bg-custom-peach-dark active:scale-95"
+                  className="relative w-full py-4 flex items-center justify-center rounded-lg bg-custom-peach text-white font-medium transition-all duration-300 hover:bg-custom-peach-dark active:scale-95"
                   onClick={handleAddToCalendar}
                 >
                   <span className="flex items-center">
@@ -435,8 +447,8 @@ const DetailProduct = () => {
                     <span className="text-sm md:text-base">カレンダーに追加</span>
                   </span>
                 </button>
-                
-                {/* お試しサイズボタン - 右側 */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* お試しサイズボタン - 左側 */}
                 <button
                   className="relative col-span-1 min-w-[140px] py-3 flex items-center justify-center rounded-lg bg-teal-600 text-white font-medium transition-all duration-300 hover:bg-teal-700 active:scale-95"
                   onClick={() => handleAddToCart(true)}
@@ -445,10 +457,11 @@ const DetailProduct = () => {
                     <Droplet className="w-5 h-5 mr-2" />
                     <span className="text-sm md:text-base">お試しサイズ</span>
                   </span>
+                  {product.samplePrice && (
+                    <span className="ml-2 text-sm font-medium">¥{product.samplePrice.toLocaleString()}</span>
+                  )}
                 </button>
-              </div>
-              
-              {/* 単品購入ボタン - 下段に全幅 */}
+                {/* 単品購入ボタン*/}
               <button
                 onClick={handleBuyNow}
                 className="relative w-full py-4 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-300 font-medium transition-all duration-300 hover:bg-gray-200 active:scale-95"
@@ -458,6 +471,9 @@ const DetailProduct = () => {
                   <span className="ml-2 text-lg font-semibold">¥{product.price?.toLocaleString()}</span>
                 </div>
               </button>
+              </div>
+              
+              
             </div>
           ) : (
             <div className="mt-6 space-y-4">
@@ -509,6 +525,9 @@ const DetailProduct = () => {
                 <span className="flex items-center">
                   <Droplet className="w-5 h-5 mr-2" />
                   <span>お試しサイズ</span>
+                  {product.samplePrice && (
+                    <span className="ml-2 text-sm font-medium">¥{product.samplePrice.toLocaleString()}</span>
+                  )}
                 </span>
               </button>
             </div>
@@ -535,7 +554,12 @@ const DetailProduct = () => {
               <div>
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-gray-500">ブランド</h4>
-                  <p>{product.brand}</p>
+                  <Link 
+                    href={`/brands/${product.brandId || product.brand}`}
+                    className="text-purple-700 hover:underline"
+                  >
+                    {product.brand}
+                  </Link>
                 </div>
                 
                 {product.volume && (
@@ -641,4 +665,4 @@ const DetailProduct = () => {
     </div>
   );
 }
-export default DetailProduct;  
+export default DetailProduct; 
