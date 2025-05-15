@@ -60,6 +60,10 @@ model User {
   subscriptions    Subscription[]
   reviews          Review[]
 
+  role          　　UserRole  @default(USER)
+  orders        Order[]   // 注文との関連付け
+
+
   @@map("users")
 }
 
@@ -105,6 +109,8 @@ model Product {
   purchases         Purchase[]
   themeProducts     ThemeProduct[]
   reviews           Review[]
+
+  orderItems    OrderItem[]
 
   @@index([brandId])
   @@map("products")
@@ -327,6 +333,32 @@ model Review {
   @@map("reviews")
 }
 
+model Order {
+  id                  String      @id @default(cuid())
+  userId              String?
+  user                User?       @relation(fields: [userId], references: [id])
+  orderNumber         String      @unique
+  totalAmount         Int
+  status              OrderStatus @default(PENDING)
+  items               OrderItem[]
+  shippingAddress     Json?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  shippedAt           DateTime?
+  trackingNumber      String?
+  notificationSent    Boolean     @default(false)
+  stripePaymentIntentId String?   @unique   // Stripe決済IDを追加
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
+}
 
 enum SubscriptionStatus {
   ACTIVE
@@ -348,4 +380,16 @@ enum DeliveryStatus {
   SHIPPED
   DELIVERED
   FAILED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING    // 未発送
+  PROCESSING // 発送準備中
+  SHIPPED    // 発送済み
+  DELIVERED  // 配達済み
 }
