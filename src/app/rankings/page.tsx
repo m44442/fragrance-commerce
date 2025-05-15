@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Filter, ChevronDown, Star, Calendar } from "lucide-react";
-import { getAllProducts, client } from "@/lib/microcms/client";
+import { client } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
 // ランキングタイプの定義
@@ -18,8 +18,20 @@ const rankingTypes = [
   { id: "seasonal", label: "季節のおすすめ" },
 ];
 
+// ランキングタイプ説明
+const rankingDescriptions = {
+  popular: "最もご購入いただいている人気の商品をランキング形式でご紹介します。",
+  "new-trend": "最近注目を集めている新しいトレンド商品をランキングでご紹介します。",
+  "best-value": "コストパフォーマンスに優れたおすすめ商品を厳選しました。",
+  gift: "大切な方へのプレゼントにぴったりな商品をランキングでご紹介します。",
+  office: "オフィスでも使いやすい、控えめながら印象的な香りをランキングでご紹介します。",
+  date: "デートシーンでおすすめの魅力的な香りをランキングでご紹介します。",
+  seasonal: "現在の季節にぴったりのおすすめ香水をランキングでご紹介します。",
+};
+
 const RankingsPage = () => {
   const [products, setProducts] = useState<productType[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<productType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedType, setSelectedType] = useState("popular");
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
@@ -29,102 +41,137 @@ const RankingsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // 選択されたランキングタイプに基づいてエンドポイントを決定
-        let endpoint = 'rumini'; // デフォルト
-        let additionalQuery = {};
+        setIsLoading(true);
         
-        if (selectedType === 'popular') {
-          // 人気ランキング - 評価や購入数などの情報を含む商品を取得
-          endpoint = 'rumini_ranking';
-          additionalQuery = { 
-            orders: '-reviewCount',
-            limit: 20
-          };
-        } else if (selectedType === 'new-trend') {
-          // 新着トレンド - 新しくて注目されている商品
-          endpoint = 'new_arrivals';
-          additionalQuery = { 
-            limit: 10
-          };
-        } else if (selectedType === 'best-value') {
-          // コスパ最強 - 価格帯が手頃な商品
-          endpoint = 'rumini';
-          additionalQuery = {
-            filters: 'price[less_than]5000',
-            orders: 'price',
-            limit: 10
-          };
-        } else {
-          // その他のタイプ (gift, office, date, seasonal)
-          // カテゴリやシーン情報に基づいてフィルタリング
-          endpoint = 'rumini';
-          additionalQuery = {
-            filters: `category[contains]${selectedType}`,
-            limit: 10
-          };
+        // 選択されたランキングタイプに基づいてクエリを決定
+        let filters = '';
+        let orders = '';
+        
+        switch (selectedType) {
+          case 'popular':
+            // 人気ランキング - レビュー数や評価が高い商品
+            filters = 'rank[greater_than]0';
+            orders = 'rank';
+            break;
+          case 'new-trend':
+            // 新着トレンド - 新商品フラグがあるもの
+            filters = 'isNew[equals]true';
+            orders = '-publishedAt';
+            break;
+          case 'best-value':
+            // コスパ最強 - 価格が手頃なもの
+            filters = 'price[less_than]5000';
+            orders = 'price';
+            break;
+          case 'gift':
+            // ギフト向け - themes配列にgiftが含まれるもの
+            filters = 'themes[contains]gift';
+            break;
+          case 'office':
+            // オフィス向け - scenes配列かthemes配列にofficeが含まれるもの
+            filters = 'themes[contains]office,scenes[contains]office';
+            break;
+          case 'date':
+            // デート向け - scenes配列かthemes配列にdateが含まれるもの
+            filters = 'themes[contains]date,scenes[contains]date';
+            break;
+          case 'seasonal':
+            // 季節のおすすめ - 現在の季節に合うもの
+            const currentMonth = new Date().getMonth() + 1;
+            let seasonFilter = '';
+            if (currentMonth >= 3 && currentMonth <= 5) {
+              // 春 (3-5月)
+              seasonFilter = 'scenes[contains]season-spring';
+            } else if (currentMonth >= 6 && currentMonth <= 8) {
+              // 夏 (6-8月)
+              seasonFilter = 'scenes[contains]season-summer';
+            } else if (currentMonth >= 9 && currentMonth <= 11) {
+              // 秋 (9-11月)
+              seasonFilter = 'scenes[contains]season-autumn';
+            } else {
+              // 冬 (12-2月)
+              seasonFilter = 'scenes[contains]season-winter';
+            }
+            filters = seasonFilter;
+            break;
+          default:
+            // デフォルトは人気ランキング
+            filters = 'rank[greater_than]0';
+            orders = 'rank';
         }
         
-        // MicroCMSから該当ランキングの商品を取得
+        // MicroCMSから商品を取得
         const result = await client.getList({
-          endpoint: endpoint,
+          endpoint: 'rumini',
           queries: {
-            ...additionalQuery
+            filters,
+            orders: orders || '-reviewCount', // デフォルトはレビュー数の降順
+            limit: 50 // 十分な数を取得して後でフィルタリング
           }
         });
         
-        // データが足りない場合は通常の商品から補完
-        let rankingProducts = result.contents || [];
+        // 取得した商品を保存
+        const fetchedProducts = result.contents || [];
+        setProducts(fetchedProducts);
         
-        if (rankingProducts.length < 5) {
-          const defaultResult = await getAllProducts();
-          // デフォルト商品をランダムにソートして追加
-          const additionalProducts = defaultResult.contents
-            .filter(p => !rankingProducts.some(rp => rp.id === p.id))
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 10 - rankingProducts.length);
-            
-          rankingProducts = [...rankingProducts, ...additionalProducts];
-        }
+        // 初期フィルタリングを適用
+        applyTimeRangeFilter(fetchedProducts, timeRange);
         
-        // ランキング順に並べ替え
-        // または適切なソート基準に基づいてソート
-        if (selectedType === 'popular') {
-          rankingProducts.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
-        } else if (selectedType === 'best-value') {
-          rankingProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
-        }
-        
-        setProducts(rankingProducts);
         setIsLoading(false);
       } catch (error) {
         console.error("Failed to fetch rankings:", error);
         setIsLoading(false);
+        // エラー時は空の配列を設定
+        setProducts([]);
+        setFilteredProducts([]);
       }
     };
 
     fetchProducts();
-  }, [selectedType]);
+  }, [selectedType]); // 選択されたタイプが変わったら再取得
 
-  // 選択されたタイプに基づいてフィルタリング
-  // 実際のアプリケーションでは、各タイプに対して適切なフィルタリングロジックを実装します
-  const filterProductsByType = (products: productType[]) => {
-    // この例では、タイプに基づいたフィルタリングロジックのモックを返します
-    return products.filter(product => {
-      // 実際のアプリケーションでは、各タイプに応じて異なるフィルター条件を適用します
-      if (selectedType === "popular") return true; // 人気ランキングはすべての商品を表示
-      if (selectedType === "best-value" && product.price < 5000) return true; // コスパ最強は5000円以下
-      if (selectedType === "new-trend" && product.isNew) return true; // 新着トレンドは新商品のみ
-      if (selectedType === "gift" && product.category === "ギフト") return true;
-      if (selectedType === "office" && product.category === "オフィス") return true;
-      if (selectedType === "date" && product.category === "デート") return true;
-      if (selectedType === "seasonal" && product.category === "季節") return true;
-      
-      // デモ用に一部の商品を表示（実際の実装では適切なフィルタリングロジックに置き換えます）
-      return Math.random() > 0.5;
-    }).slice(0, 10); // 上位10アイテムを表示
+  // 時間範囲でのフィルタリング
+  const applyTimeRangeFilter = (products: productType[], range: string) => {
+    if (range === 'all') {
+      // すべての期間 - フィルタリングなし
+      setFilteredProducts(products);
+      return;
+    }
+    
+    const now = new Date();
+    let cutoffDate: Date;
+    
+    if (range === 'weekly') {
+      // 週間 - 過去7日間
+      cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (range === 'monthly') {
+      // 月間 - 過去30日間
+      cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else {
+      // 不明な範囲 - すべて表示
+      setFilteredProducts(products);
+      return;
+    }
+    
+    // 期間でフィルタリング (publishedAtが指定期間内)
+    const filtered = products.filter(product => {
+      if (!product.publishedAt) return false;
+      const publishDate = new Date(product.publishedAt);
+      return publishDate >= cutoffDate;
+    });
+    
+    // フィルタリング結果が少なすぎる場合はすべて表示
+    if (filtered.length < 3) {
+      setFilteredProducts(products);
+    } else {
+      setFilteredProducts(filtered);
+    }
   };
   
-  const filteredProducts = filterProductsByType(products);
+  // 時間範囲が変更されたら再フィルタリング
+  useEffect(() => {
+    applyTimeRangeFilter(products, timeRange);
+  }, [timeRange, products]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -214,13 +261,8 @@ const RankingsPage = () => {
           {rankingTypes.find(type => type.id === selectedType)?.label || "ランキング"}
         </h2>
         <p className="text-sm text-gray-600">
-          {selectedType === "popular" && "最もご購入いただいている人気の商品をランキング形式でご紹介します。"}
-          {selectedType === "new-trend" && "最近注目を集めている新しいトレンド商品をランキングでご紹介します。"}
-          {selectedType === "best-value" && "コストパフォーマンスに優れたおすすめ商品を厳選しました。"}
-          {selectedType === "gift" && "大切な方へのプレゼントにぴったりな商品をランキングでご紹介します。"}
-          {selectedType === "office" && "オフィスでも使いやすい、控えめながら印象的な香りをランキングでご紹介します。"}
-          {selectedType === "date" && "デートシーンでおすすめの魅力的な香りをランキングでご紹介します。"}
-          {selectedType === "seasonal" && "現在の季節にぴったりのおすすめ香水をランキングでご紹介します。"}
+          {rankingDescriptions[selectedType as keyof typeof rankingDescriptions] || 
+           "選ばれた商品をランキング形式でご紹介します。"}
         </p>
       </div>
 
@@ -230,7 +272,7 @@ const RankingsPage = () => {
         </div>
       ) : filteredProducts.length > 0 ? (
         <div className="space-y-6">
-          {filteredProducts.map((product, index) => (
+          {filteredProducts.slice(0, 10).map((product, index) => (
             <Link 
               key={product.id} 
               href={`/products/${product.id}`}
@@ -253,8 +295,8 @@ const RankingsPage = () => {
                   <Image 
                     src={product.thumbnail.url} 
                     alt={product.title} 
-                    layout="fill" 
-                    objectFit="cover"
+                    fill
+                    style={{ objectFit: 'cover' }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -269,7 +311,11 @@ const RankingsPage = () => {
                   <p className="text-xs text-gray-500">{product.brand}</p>
                   <h3 className="text-md font-medium">{product.title}</h3>
                   {product.category && (
-                    <p className="text-xs text-pink-500 mt-1">{product.category}</p>
+                    <p className="text-xs text-pink-500 mt-1">
+                      {Array.isArray(product.category) 
+                        ? product.category.join(', ') 
+                        : product.category}
+                    </p>
                   )}
                 </div>
                 
@@ -280,7 +326,7 @@ const RankingsPage = () => {
                       {product.averageRating?.toFixed(1) || "4.5"}
                     </span>
                     <span className="text-xs text-gray-500 ml-1">
-                      ({product.reviewCount || 10})
+                      ({product.reviewCount || 0})
                     </span>
                   </div>
                   <p className="text-sm font-semibold">¥{product.price?.toLocaleString()}</p>

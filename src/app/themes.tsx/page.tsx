@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Search, Heart, Calendar, Coffee, Wine, Briefcase, Music, Sun, Moon } from "lucide-react";
-import { getThemeProducts } from "@/lib/microcms/client";
+import { getUniqueThemes } from "@/lib/microcms/client"; // 新しい関数を使用
 
 // テーマの型定義
 interface Theme {
@@ -27,15 +27,29 @@ const ThemesPage = () => {
   const getThemeIcon = (themeId: string) => {
     const icons: Record<string, React.ReactNode> = {
       "date": <Heart className="w-4 h-4" />,
-      "season": <Calendar className="w-4 h-4" />,
+      "seasonal": <Calendar className="w-4 h-4" />,
       "coffee": <Coffee className="w-4 h-4" />,
       "wine": <Wine className="w-4 h-4" />,
       "office": <Briefcase className="w-4 h-4" />,
       "music": <Music className="w-4 h-4" />,
       "day": <Sun className="w-4 h-4" />,
       "night": <Moon className="w-4 h-4" />,
+      "popular": <Heart className="w-4 h-4" />,
+      "new-trend": <Calendar className="w-4 h-4" />,
+      "best-value": <Heart className="w-4 h-4" />,
+      "gift": <Calendar className="w-4 h-4" />,
     };
-    return icons[themeId] || <Heart className="w-4 h-4" />;
+    
+    // IDが直接マッチするか確認
+    if (icons[themeId]) return icons[themeId];
+    
+    // 部分一致で探す
+    for (const [key, icon] of Object.entries(icons)) {
+      if (themeId.includes(key)) return icon;
+    }
+    
+    // デフォルトアイコン
+    return <Heart className="w-4 h-4" />;
   };
 
   // テーマカテゴリ
@@ -51,27 +65,13 @@ const ThemesPage = () => {
   useEffect(() => {
     const fetchThemes = async () => {
       try {
-        const result = await getThemeProducts();
+        const result = await getUniqueThemes(); // 新しい関数を使用
         
-        // MicroCMSからのデータを整形してTheme配列に変換
+        // テーマ情報にアイコンを追加
         const formattedThemes: Theme[] = (result.contents || []).map(theme => {
-          // アイコンをテーマIDに基づいて割り当て
-          let icon = <Heart />;
-          if (theme.id.includes('season')) icon = <Calendar />;
-          else if (theme.id.includes('fresh') || theme.id.includes('summer')) icon = <Sun />;
-          else if (theme.id.includes('music')) icon = <Music />;
-          else if (theme.id.includes('tea') || theme.id.includes('coffee')) icon = <Coffee />;
-          else if (theme.id.includes('wine')) icon = <Wine />;
-          else if (theme.id.includes('office')) icon = <Briefcase />;
-          else if (theme.id.includes('night')) icon = <Moon />;
-          
           return {
-            id: theme.id,
-            name: theme.name || theme.title,
-            description: theme.description || '',
-            imageUrl: theme.imageUrl || theme.thumbnail?.url,
-            productCount: theme.productCount || 0,
-            icon: icon
+            ...theme,
+            icon: getThemeIcon(theme.id)
           };
         });
         
@@ -81,6 +81,22 @@ const ThemesPage = () => {
       } catch (error) {
         console.error("Failed to fetch themes:", error);
         setIsLoading(false);
+        
+        // エラー時のフォールバック: デフォルトテーマを表示
+        const fallbackThemes = [
+          { id: "popular", name: "人気ランキング", description: "人気の商品をピックアップ", productCount: 10 },
+          { id: "new-trend", name: "新着トレンド", description: "最新の商品", productCount: 8 },
+          { id: "best-value", name: "コスパ最強", description: "お買い得な商品", productCount: 12 },
+          { id: "gift", name: "ギフトにおすすめ", description: "プレゼントに最適な商品", productCount: 9 },
+          { id: "office", name: "オフィス向け", description: "職場でも使いやすい商品", productCount: 7 },
+          { id: "date", name: "デート向け", description: "特別な日の商品", productCount: 6 },
+        ].map(theme => ({
+          ...theme,
+          icon: getThemeIcon(theme.id)
+        }));
+        
+        setThemes(fallbackThemes);
+        setDisplayThemes(fallbackThemes);
       }
     };
 
@@ -93,24 +109,24 @@ const ThemesPage = () => {
     
     // カテゴリーでフィルタリング
     if (selectedCategory !== "all") {
-      // 実際の実装では、テーマにカテゴリータグがあると仮定
       filtered = filtered.filter(theme => {
+        const id = theme.id.toLowerCase();
+        const name = theme.name.toLowerCase();
+        
         if (selectedCategory === "popular") {
-          // 人気のテーマ（例：productCountが10以上）
-          return theme.productCount && theme.productCount >= 10;
+          return id === "popular" || (theme.productCount && theme.productCount >= 10);
         } else if (selectedCategory === "seasonal") {
-          // 季節のテーマ（名前に「夏」「冬」などが含まれる）
-          return theme.name.includes("夏") || theme.name.includes("冬") || 
-                 theme.name.includes("春") || theme.name.includes("秋") ||
-                 theme.name.includes("season");
+          return id === "seasonal" || id.includes("season") || 
+                 name.includes("季節") || name.includes("春") || 
+                 name.includes("夏") || name.includes("秋") || 
+                 name.includes("冬");
         } else if (selectedCategory === "scene") {
-          // シーン別テーマ（名前に「オフィス」「デート」などが含まれる）
-          return theme.name.includes("オフィス") || theme.name.includes("デート") || 
-                 theme.name.includes("夜") || theme.name.includes("お出かけ");
+          return id === "office" || id === "date" || id.includes("scene") ||
+                 name.includes("シーン") || name.includes("オフィス") || 
+                 name.includes("デート") || name.includes("パーティー");
         } else if (selectedCategory === "mood") {
-          // 気分別テーマ（名前に「爽やか」「落ち着く」などが含まれる）
-          return theme.name.includes("爽やか") || theme.name.includes("優しい") || 
-                 theme.name.includes("オシャレ");
+          return name.includes("気分") || name.includes("爽やか") || 
+                 name.includes("優しい") || name.includes("オシャレ");
         }
         return true;
       });
@@ -196,8 +212,8 @@ const ThemesPage = () => {
                   <Image
                     src={theme.imageUrl}
                     alt={theme.name}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    style={{ objectFit: 'cover' }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-custom-peach to-pink-300">
@@ -205,9 +221,11 @@ const ThemesPage = () => {
                   </div>
                 )}
                 {/* 商品数バッジ */}
-                <div className="absolute bottom-2 right-2 bg-white bg-opacity-80 text-custom-peach text-xs font-bold px-2 py-1 rounded-full">
-                  {theme.productCount}個のアイテム
-                </div>
+                {theme.productCount !== undefined && (
+                  <div className="absolute bottom-2 right-2 bg-white bg-opacity-80 text-custom-peach text-xs font-bold px-2 py-1 rounded-full">
+                    {theme.productCount}個のアイテム
+                  </div>
+                )}
               </div>
               <div className="p-4 flex-grow">
                 <div className="flex items-center mb-2">

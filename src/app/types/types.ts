@@ -19,17 +19,48 @@ declare module "next-auth" {
   }
 }
 
-type productType = {
-    id: number,
-    title: string,
-    price: number,
-    category: string,
-    brand: string,
-    description: string,
-    thumbnail: { url: string},
-    createdAt: string,
-    updatedAt: string,
-    rank: number
-};
+// 商品の型定義を更新
+interface productType {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  discountPrice?: number;
+  stock: number;
+  thumbnail?: { url: string };
+  images?: { url: string }[];
+  brand: string;
+  brandInfo?: {
+    name: string;
+    nameJp?: string;
+    description?: string;
+    logo?: { url: string };
+    isFeatured?: boolean;
+  };
+  category?: string[];
+  topNotes?: string;
+  middleNotes?: string;
+  baseNotes?: string;
+  volume?: number;
+  concentration?: string;
+  scenes?: string[];
+  themes?: string[];
+  themeDescription?: string;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  isPublished?: boolean;
+  rank?: number;
+  averageRating?: number;
+  reviewCount: number;
+  celebrityPick?: boolean;
+  celebrityInfo?: {
+    name: string;
+    type: string;
+    comment?: string;
+  };
+  keywords?: string;
+  publishedAt?: string;
+  updatedAt?: string;
+}
 
 export type { productType };

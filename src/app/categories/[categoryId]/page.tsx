@@ -34,93 +34,116 @@ const CategoryDetailPage = () => {
 
   // カテゴリデータと商品データの取得
   useEffect(() => {
-    const fetchCategoryData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // カテゴリ情報をMicroCMSから取得
-        try {
-          const categoryResult = await client.getListDetail({
-            endpoint: 'categories',
-            contentId: categoryId,
-          });
-          
-          if (categoryResult) {
-            setCategory({
-              id: categoryResult.id,
-              name: categoryResult.name,
-              description: categoryResult.description || '',
-              bannerUrl: categoryResult.imageUrl || categoryResult.thumbnail?.url
-            });
-          }
-        } catch (categoryError) {
-          console.error("Failed to fetch category details:", categoryError);
-          // エラーがあっても続行 - デフォルトのカテゴリ情報を使用
-        }
-        
-        // カテゴリに関連する商品の取得
-        let categoryProducts: productType[] = [];
-        
-        try {
-          // カテゴリタイプの判定
-          const categoryType = ["floral", "citrus", "woody", "oriental", "fresh", "gourmand", "green", "aquatic", "fruity", "spicy"].includes(categoryId) 
-            ? 'scent' 
-            : 'scene';
-            
-          // カテゴリ専用の取得関数を使用
-          const productResult = await getCategoryProducts(categoryId, categoryType);
-          categoryProducts = productResult.contents || [];
-          
-          // 関連商品が見つからない場合は、より広いフィルタリングを試みる
-          if (categoryProducts.length === 0) {
-            // 商品名や説明文からキーワード検索
-            const keywordResult = await client.getList({
-              endpoint: 'rumini',
-              queries: {
-                q: category.name,
-                limit: 100
-              }
-            });
-            
-            categoryProducts = keywordResult.contents || [];
-          }
-        } catch (productError) {
-          console.error("Failed to fetch category products:", productError);
-        }
-        
-        // それでも商品が見つからない場合は、全ての商品を取得して関連性のある商品をフィルタリング
-        if (categoryProducts.length === 0) {
-          try {
-            const allProducts = await getAllProducts();
-            categoryProducts = allProducts.contents.filter(product => {
-              const categoryName = category.name.toLowerCase();
-              const productDesc = (product.description || '').toLowerCase();
-              const productTitle = (product.title || '').toLowerCase();
-              
-              return productDesc.includes(categoryName) || 
-                    productTitle.includes(categoryName) ||
-                    (product.category && product.category.toLowerCase().includes(categoryName));
-            });
-            
-            // それでも見つからない場合はランダムに8つ表示
-            if (categoryProducts.length < 4) {
-              categoryProducts = allProducts.contents
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 8);
-            }
-          } catch (allProductsError) {
-            console.error("Failed to fetch all products:", allProductsError);
-          }
-        }
-        
-        setProducts(categoryProducts || []);
-        setFilteredProducts(categoryProducts || []);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch category data:", error);
-        setIsLoading(false);
+    この条件分岐コードブロックは、src/app/categories/[categoryId]/page.tsx ファイル内の fetchCategoryData 関数に入れるべきです。具体的には、カテゴリ商品を取得する部分に追加します。
+以下が修正すべき箇所の詳細です：
+javascript// src/app/categories/[categoryId]/page.tsx 内の fetchCategoryData 関数
+
+const fetchCategoryData = async () => {
+  try {
+    setIsLoading(true);
+    
+    // カテゴリ情報をMicroCMSから取得
+    try {
+      const categoryResult = await client.getListDetail({
+        endpoint: 'categories',
+        contentId: categoryId,
+      });
+      
+      if (categoryResult) {
+        setCategory({
+          id: categoryResult.id,
+          name: categoryResult.name,
+          description: categoryResult.description || '',
+          bannerUrl: categoryResult.imageUrl || categoryResult.thumbnail?.url
+        });
       }
-    };
+    } catch (categoryError) {
+      console.error("Failed to fetch category details:", categoryError);
+      // エラーがあっても続行 - デフォルトのカテゴリ情報を使用
+    }
+    
+    // カテゴリに関連する商品の取得
+    let categoryProducts: productType[] = [];
+    
+    try {
+      // カテゴリタイプの判定
+      const categoryType = ["floral", "citrus", "woody", "oriental", "fresh", "gourmand", "green", "aquatic", "fruity", "spicy"].includes(categoryId) 
+        ? 'scent' 
+        : 'scene';
+          
+      // まずはカテゴリで商品を検索
+      const productResult = await client.getList({
+        endpoint: 'rumini',
+        queries: {
+          filters: `category[contains]${categoryId}`,
+          limit: 100
+        }
+      });
+      
+      categoryProducts = productResult.contents || [];
+      
+      // カテゴリで商品が見つからない場合はシーン情報で検索
+      if (productResult.contents.length === 0) {
+        const sceneResult = await client.getList({
+          endpoint: 'rumini',
+          queries: {
+            filters: `scenes[contains]${categoryId}`, // シーン情報の場合
+            limit: 100
+          }
+        });
+        categoryProducts = sceneResult.contents || [];
+      }
+      
+      // 関連商品が見つからない場合は、より広いフィルタリングを試みる
+      if (categoryProducts.length === 0) {
+        // 商品名や説明文からキーワード検索
+        const keywordResult = await client.getList({
+          endpoint: 'rumini',
+          queries: {
+            q: category.name,
+            limit: 100
+          }
+        });
+        
+        categoryProducts = keywordResult.contents || [];
+      }
+    } catch (productError) {
+      console.error("Failed to fetch category products:", productError);
+    }
+    
+    // それでも商品が見つからない場合は、全ての商品を取得して関連性のある商品をフィルタリング
+    if (categoryProducts.length === 0) {
+      try {
+        const allProducts = await getAllProducts();
+        categoryProducts = allProducts.contents.filter(product => {
+          const categoryName = category.name.toLowerCase();
+          const productDesc = (product.description || '').toLowerCase();
+          const productTitle = (product.title || '').toLowerCase();
+          
+          return productDesc.includes(categoryName) || 
+                productTitle.includes(categoryName) ||
+                (product.category && product.category.toLowerCase().includes(categoryName));
+        });
+        
+        // それでも見つからない場合はランダムに8つ表示
+        if (categoryProducts.length < 4) {
+          categoryProducts = allProducts.contents
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 8);
+        }
+      } catch (allProductsError) {
+        console.error("Failed to fetch all products:", allProductsError);
+      }
+    }
+    
+    setProducts(categoryProducts || []);
+    setFilteredProducts(categoryProducts || []);
+    setIsLoading(false);
+  } catch (error) {
+    console.error("Failed to fetch category data:", error);
+    setIsLoading(false);
+  }
+};
 
     fetchCategoryData();
   }, [categoryId]);

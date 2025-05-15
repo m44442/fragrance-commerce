@@ -4,96 +4,70 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { getFeaturedBrands } from "@/lib/microcms/client";
-import { ArrowLeft, Search } from "lucide-react";
+import { getProductsByBrand } from "@/lib/microcms/client";
+import { ArrowLeft, Search, Star } from "lucide-react";
+import { productType } from "@/types/types";
 
-// ブランドの型定義
-interface Brand {
+// ブランドと商品のグループを表す型
+interface BrandWithProducts {
   id: string;
   name: string;
-  nameJp: string;
-  description?: string;
-  logoUrl?: string;
-  imageUrl?: string;
-  tagline?: string;
-  isFeatured?: boolean;
+  products: productType[];
 }
 
 const BrandsPage = () => {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [displayBrands, setDisplayBrands] = useState<Brand[]>([]);
+  const [brandGroups, setBrandGroups] = useState<BrandWithProducts[]>([]);
+  const [displayBrandGroups, setDisplayBrandGroups] = useState<BrandWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all"); // 'all', 'featured'
   const { data: session } = useSession();
 
-  // ブランドデータ取得
+  // ブランドごとの商品データを取得
   useEffect(() => {
-    const fetchBrands = async () => {
+    const fetchBrandProducts = async () => {
       try {
-        const result = await getFeaturedBrands();
-        
-        // MicroCMSからのデータを整形
-        const formattedBrands: Brand[] = (result.contents || []).map(brand => ({
-          id: brand.id,
-          name: brand.name,
-          nameJp: brand.nameJp || '',
-          description: brand.description || '',
-          logoUrl: brand.logoUrl,
-          imageUrl: brand.imageUrl || brand.thumbnail?.url,
-          tagline: brand.tagline || '',
-          isFeatured: brand.isFeatured || false
-        }));
-        
-        setBrands(formattedBrands);
-        setDisplayBrands(formattedBrands);
+        const result = await getProductsByBrand();
+        setBrandGroups(result);
+        setDisplayBrandGroups(result);
         setLoading(false);
       } catch (error) {
-        console.error("Failed to fetch brands:", error);
+        console.error("Failed to fetch brand products:", error);
         setLoading(false);
       }
     };
 
-    fetchBrands();
+    fetchBrandProducts();
   }, []);
 
-  // 検索とフィルタリング
+  // 検索フィルタリング
   useEffect(() => {
-    let filtered = [...brands];
-    
-    // フィルター適用
-    if (filter === "featured") {
-      filtered = filtered.filter(brand => brand.isFeatured);
+    if (!searchTerm) {
+      setDisplayBrandGroups(brandGroups);
+      return;
     }
     
-    // 検索用語による絞り込み
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        brand => 
-          brand.name.toLowerCase().includes(term) || 
-          (brand.nameJp && brand.nameJp.toLowerCase().includes(term))
-      );
-    }
+    const term = searchTerm.toLowerCase();
     
-    setDisplayBrands(filtered);
-  }, [searchTerm, filter, brands]);
-
-  // アルファベット順にソート
-  const sortedBrands = [...displayBrands].sort((a, b) => a.name.localeCompare(b.name));
+    // ブランド名で検索
+    const filteredBrands = brandGroups.filter(group => 
+      group.name.toLowerCase().includes(term)
+    );
+    
+    setDisplayBrandGroups(filteredBrands);
+  }, [searchTerm, brandGroups]);
 
   // アルファベット別にグループ化
-  const groupedBrands = sortedBrands.reduce((acc, brand) => {
+  const groupByAlphabet = displayBrandGroups.reduce((acc, brand) => {
     const firstLetter = brand.name.charAt(0).toUpperCase();
     if (!acc[firstLetter]) {
       acc[firstLetter] = [];
     }
     acc[firstLetter].push(brand);
     return acc;
-  }, {} as Record<string, Brand[]>);
+  }, {} as Record<string, BrandWithProducts[]>);
 
-  // アルファベット順に並べた文字配列
-  const letters = Object.keys(groupedBrands).sort();
+  // アルファベット順に文字を取得
+  const letters = Object.keys(groupByAlphabet).sort();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -102,10 +76,10 @@ const BrandsPage = () => {
         <Link href="/" className="mr-4">
           <ArrowLeft className="w-6 h-6" />
         </Link>
-        <h1 className="text-2xl font-bold">ブランド一覧</h1>
+        <h1 className="text-2xl font-bold">ブランド別商品一覧</h1>
       </div>
 
-      {/* 検索とフィルターコントロール */}
+      {/* 検索 */}
       <div className="mb-6">
         <div className="relative mb-4">
           <input
@@ -117,110 +91,102 @@ const BrandsPage = () => {
           />
           <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
         </div>
-
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-full ${
-              filter === "all"
-                ? "bg-custom-peach text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            すべて
-          </button>
-          <button
-            onClick={() => setFilter("featured")}
-            className={`px-4 py-2 rounded-full ${
-              filter === "featured"
-                ? "bg-custom-peach text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            注目のブランド
-          </button>
-        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin h-10 w-10 border-4 border-custom-peach rounded-full border-t-transparent"></div>
         </div>
-      ) : displayBrands.length > 0 ? (
+      ) : displayBrandGroups.length > 0 ? (
         <div>
           {/* アルファベットインデックス */}
-          <div className="flex flex-wrap justify-center mb-6 gap-2">
-            {letters.map(letter => (
-              <a 
-                key={letter} 
-                href={`#${letter}`} 
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-custom-peach hover:text-white rounded-full text-sm"
-              >
-                {letter}
-              </a>
-            ))}
-          </div>
+          {letters.length > 1 && (
+            <div className="flex flex-wrap justify-center mb-6 gap-2">
+              {letters.map(letter => (
+                <a 
+                  key={letter} 
+                  href={`#${letter}`} 
+                  className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-custom-peach hover:text-white rounded-full text-sm"
+                >
+                  {letter}
+                </a>
+              ))}
+            </div>
+          )}
 
-          {/* ブランドリスト */}
+          {/* ブランドごとの商品リスト */}
           {letters.map(letter => (
-            <div key={letter} id={letter} className="mb-8">
+            <div key={letter} id={letter} className="mb-12">
               <h2 className="text-xl font-bold mb-4 sticky top-16 bg-white py-2 border-b">{letter}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {groupedBrands[letter].map(brand => (
-                  <Link 
-                    key={brand.id} 
-                    href={`/brands/${brand.id}`}
-                    className="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
-                  >
-                    <div className="h-40 bg-gray-200 relative">
-                      {brand.imageUrl ? (
-                        <Image 
-                          src={brand.imageUrl} 
-                          alt={brand.name} 
-                          layout="fill" 
-                          objectFit="cover"
-                        />
-                      ) : brand.logoUrl ? (
-                        <div className="flex items-center justify-center h-full bg-white p-4">
-                          <Image 
-                            src={brand.logoUrl} 
-                            alt={brand.name} 
-                            width={150}
-                            height={100}
-                            className="object-contain"
-                          />
+              
+              {groupByAlphabet[letter].map(brandGroup => (
+                <div key={brandGroup.id} className="mb-8">
+                  {/* ブランドヘッダー */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold">{brandGroup.name}</h3>
+                    <Link href={`/brands/${brandGroup.id}`} className="text-sm text-gray-500 hover:text-custom-peach">
+                      もっと見る &gt;
+                    </Link>
+                  </div>
+                  
+                  {/* 商品リスト - 横スクロール */}
+                  <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+                    {brandGroup.products.map(product => (
+                      <Link 
+                        key={product.id} 
+                        href={`/products/${product.id}`}
+                        className="flex-shrink-0 w-56 bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+                      >
+                        {/* 商品画像 */}
+                        <div className="h-40 bg-gray-200 relative">
+                          {product.thumbnail?.url ? (
+                            <Image 
+                              src={product.thumbnail.url} 
+                              alt={product.title} 
+                              fill
+                              style={{ objectFit: "cover" }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Image
+                            </div>
+                          )}
+                          {product.isNew && (
+                            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                              NEW
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          {brand.name}
+                        
+                        {/* 商品情報 */}
+                        <div className="p-3">
+                          <p className="text-xs text-gray-500">{product.brand}</p>
+                          <h4 className="text-sm font-medium truncate">{product.title}</h4>
+                          
+                          {/* 評価表示 */}
+                          {product.averageRating && (
+                            <div className="flex items-center mt-1">
+                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                              <span className="text-xs ml-1">{product.averageRating.toFixed(1)}</span>
+                              {product.reviewCount && (
+                                <span className="text-xs text-gray-500 ml-1">({product.reviewCount})</span>
+                              )}
+                            </div>
+                          )}
+                          
+                          <p className="text-sm font-semibold mt-1">¥{product.price?.toLocaleString()}</p>
                         </div>
-                      )}
-                      {brand.isFeatured && (
-                        <div className="absolute top-2 right-2 bg-custom-peach text-white text-xs px-2 py-1 rounded-full">
-                          注目
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-md font-bold">{brand.name}</h3>
-                      {brand.nameJp && (
-                        <p className="text-sm text-gray-600">{brand.nameJp}</p>
-                      )}
-                      {brand.tagline && (
-                        <div className="mt-2 bg-gray-100 rounded-full px-3 py-1">
-                          <p className="text-xs text-gray-700">{brand.tagline}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
       ) : (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">検索条件に一致するブランドがありません</p>
+          <p className="text-gray-500">ブランドが見つかりません</p>
         </div>
       )}
     </div>
