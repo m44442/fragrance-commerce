@@ -7,7 +7,7 @@ export const client = createClient({
   apiKey: process.env.NEXT_PUBLIC_API_KEY!,
 });
 
-// 通常の商品情報取得用
+// 商品情報取得用関数
 export const getAllProducts = async () => {
   const allProducts = await client.getList<productType>({
     endpoint: "rumini",
@@ -24,45 +24,80 @@ export const getDetailProduct = async (contentId: string) => {
   return detailProduct;
 };
 
-// 推し香水用のエンドポイント
-export const getCelebrityFragrances = async () => {
-  const result = await client.getList<any>({
-    endpoint: "celebrity_fragrances", // 推し香水用のエンドポイント
-  });
-  return result;
-};
-
-// ランキング用のエンドポイント（既存）
-export const getRankingProducts = async () => {
-  const result = await client.getList<productType>({
-    endpoint: "rumini_ranking",
-  });
-  return result;
-};
-
-// ブランド特集用のエンドポイント
-export const getFeaturedBrands = async () => {
-  const result = await client.getList<any>({
-    endpoint: "featured_brands", // ブランド特集用のエンドポイント
-  });
-  return result;
-};
-
-// 新着商品用のエンドポイント
+// 新着商品取得
 export const getNewArrivals = async () => {
-  const result = await client.getList<productType>({
-    endpoint: "new_arrivals", // 新着商品用のエンドポイント
+  return await client.getList<productType>({
+    endpoint: "rumini",
     queries: {
-      orders: "-publishedAt" // 公開日の新しい順
+      orders: '-publishedAt', // 公開日の新しい順
+      limit: 50
     }
   });
-  return result;
 };
 
-// テーマ特集用のエンドポイント
-export const getThemeCollections = async () => {
-  const result = await client.getList<any>({
-    endpoint: "theme_collections", // テーマ特集用のエンドポイント
+// ランキング商品取得
+export const getRankingProducts = async () => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: 'rank[greater_than]0',
+      orders: 'rank', // ランキング順
+      limit: 20
+    }
   });
-  return result;
+};
+
+// ブランド別商品取得
+export const getBrandProducts = async (brandName: string) => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: `brand[equals]${brandName}`,
+      limit: 100
+    }
+  });
+};
+
+// カテゴリー別商品取得
+export const getCategoryProducts = async (category: string) => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: `category[contains]${category}`,
+      limit: 100
+    }
+  });
+};
+
+// シーン別商品取得
+export const getSceneProducts = async (scene: string) => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: `scenes[contains]${scene}`,
+      limit: 100
+    }
+  });
+};
+
+// テーマ別商品取得
+export const getThemeProducts = async (theme: string) => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: `themes[contains]${theme}`,
+      limit: 100
+    }
+  });
+};
+
+// 推し香水商品取得
+export const getCelebrityPicks = async () => {
+  return await client.getList<productType>({
+    endpoint: "rumini",
+    queries: {
+      filters: 'celebrityPick[equals]true',
+      limit: 50
+    }
+  });
 };
