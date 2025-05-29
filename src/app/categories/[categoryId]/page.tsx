@@ -34,9 +34,6 @@ const CategoryDetailPage = () => {
 
   // カテゴリデータと商品データの取得
   useEffect(() => {
-    この条件分岐コードブロックは、src/app/categories/[categoryId]/page.tsx ファイル内の fetchCategoryData 関数に入れるべきです。具体的には、カテゴリ商品を取得する部分に追加します。
-以下が修正すべき箇所の詳細です：
-javascript// src/app/categories/[categoryId]/page.tsx 内の fetchCategoryData 関数
 
 const fetchCategoryData = async () => {
   try {
