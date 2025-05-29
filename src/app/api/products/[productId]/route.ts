@@ -1,15 +1,15 @@
 // src/app/api/products/[productId]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { client } from "@/lib/microcms/client";
 import { syncProductToDatabase } from "@/lib/sync-utils";
 import prisma from "@/lib/prisma";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { productId: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
 
     if (!productId) {
       return NextResponse.json(

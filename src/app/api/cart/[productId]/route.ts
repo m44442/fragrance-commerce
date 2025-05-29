@@ -1,203 +1,136 @@
-// src/app/api/cart/[productId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
-import { client } from '@/lib/microcms/client'; // MicroCMSクライアントをインポート
-import { syncProductToDatabase } from '@/lib/sync-utils';
 
-export async function POST(
-  request: Request,
-  { params }: { params: { productId: string } }
+// GET: カート内の商品を取得
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    // パラメータを最初に確認（async/awaitを使用）
-    const { productId } = params;
-    
-    if (!productId) {
-      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-    }
-
-    // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const data = await request.json();
-    const { added, quantity = 1 } = data;
 
-    // カートに追加する前に商品の存在確認
-    let productIdToUse = productId;
-    
-    const productExists = await prisma.product.findUnique({
+    const { productId } = await params;
+
+    const cartItem = await prisma.cartItem.findFirst({
       where: {
-        id: productIdToUse,
+        cart: {
+          userId: session.user.id
+        },
+        productId: productId
       },
+      include: {
+        product: true
+      }
     });
 
-    if (!productExists) {
-      console.log(`商品が見つかりません: ${productIdToUse}`);
-      
-      // MicroCMS IDを使用して検索
-      const productByMicroCmsId = await prisma.product.findFirst({
-        where: {
-          microCmsId: productIdToUse,
-        },
-      });
-      
-      if (productByMicroCmsId) {
-        // 正しいIDを使用
-        productIdToUse = productByMicroCmsId.id;
-        console.log(`MicroCMS IDでの検索結果: ${productIdToUse}`);
-      } else {
-        // 商品が見つからない場合、MicroCMSから取得して同期を試みる
-        try {
-          console.log(`MicroCMSから商品取得を試みます: ${productIdToUse}`);
-          const microCmsProduct = await client.getListDetail({
-            endpoint: 'rumini',
-            contentId: productIdToUse,
-          });
-          
-          if (microCmsProduct) {
-            // データベースに同期
-            const syncedProduct = await syncProductToDatabase(microCmsProduct);
-            productIdToUse = syncedProduct.id;
-            console.log(`商品を同期しました。新しいID: ${productIdToUse}`);
-          } else {
-            return NextResponse.json({ 
-              error: '指定された商品はMicroCMSにも存在しません。', 
-              productId: productIdToUse,
-              success: false 
-            }, { status: 404 });
-          }
-        } catch (error) {
-          console.error('商品の自動同期に失敗しました:', error);
-          return NextResponse.json({ 
-            error: '指定された商品はデータベースに存在せず、自動同期にも失敗しました。', 
-            productId: productIdToUse,
-            success: false 
-          }, { status: 404 });
-        }
-      }
-    }
-    
-    // ユーザーのカートを取得または作成
-    let cart = await prisma.cart.findUnique({
-      where: {
-        userId: session.user.id,
-      },
-    });
-    
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: {
-          userId: session.user.id,
-        },
-      });
-    }
-    
-    
-    if (added) {
-      // カートアイテムを確認
-      const existingItem = await prisma.cartItem.findFirst({
-        where: {
-          cartId: cart.id,
-          productId: productIdToUse,
-        },
-      });
-      
-      if (existingItem) {
-        // 数量を更新
-        await prisma.cartItem.update({
-          where: {
-            id: existingItem.id,
-          },
-          data: {
-            quantity: existingItem.quantity + quantity,
-          },
-        });
-      } else {
-        // 新しいアイテムを追加
-        await prisma.cartItem.create({
-          data: {
-            cartId: cart.id,
-            productId: productIdToUse,
-            quantity,
-          },
-        });
-      }
-    } else {
-      // カートから削除
-      await prisma.cartItem.deleteMany({
-        where: {
-          cartId: cart.id,
-          productId: productIdToUse,
-        },
-      });
-    }
-    
-    // カートの更新時間を更新
-    await prisma.cart.update({
-      where: {
-        id: cart.id,
-      },
-      data: {
-        updatedAt: new Date(),
-      },
-    });
-    
-    return NextResponse.json({ success: true, added });
+    return NextResponse.json(cartItem);
   } catch (error) {
-    // エラーハンドリングを改善
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error updating cart:', errorMessage);
-    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
+    console.error('Error fetching cart item:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-export async function GET(
+// POST: カートに商品を追加
+export async function POST(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
-  // パラメータを最初に確認
-  if (!params || !params.productId) {
-    return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-  }
-
-  const productId = params.productId;
-
   try {
-    // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // カートの状態を確認
-    const cart = await prisma.cart.findUnique({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        items: {
-          where: {
-            productId,
-          },
-        },
-      },
+
+    const { productId } = await params;
+    const { quantity = 1 } = await request.json();
+
+    // ユーザーのカートを取得または作成
+    let cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id }
     });
-    
-    const inCart = cart?.items.length ? true : false;
-    const quantity = cart?.items[0]?.quantity || 0;
-    
-    return NextResponse.json({ inCart, quantity });
+
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { userId: session.user.id }
+      });
+    }
+
+    // カート内の既存アイテムを確認
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId: productId
+      }
+    });
+
+    if (existingItem) {
+      // 既存アイテムの数量を更新
+      const updatedItem = await prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: existingItem.quantity + quantity },
+        include: { product: true }
+      });
+      return NextResponse.json(updatedItem);
+    } else {
+      // 新しいアイテムを追加
+      const newItem = await prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: productId,
+          quantity: quantity
+        },
+        include: { product: true }
+      });
+      return NextResponse.json(newItem);
+    }
   } catch (error) {
-    // エラーハンドリングを改善
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error checking cart status:', errorMessage);
-    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
+    console.error('Error adding to cart:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: カートから商品を削除
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ productId: string }> }
+) {
+  try {
+    const session = await getServerSession(nextAuthOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { productId } = await params;
+
+    await prisma.cartItem.deleteMany({
+      where: {
+        cart: {
+          userId: session.user.id
+        },
+        productId: productId
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
