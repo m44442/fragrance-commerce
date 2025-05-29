@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { Home, Search, Heart, User } from "lucide-react";
 
 // ナビゲーション項目の定義

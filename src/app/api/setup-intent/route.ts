@@ -1,5 +1,5 @@
 // src/app/api/setup-intent/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
@@ -7,7 +7,7 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(nextAuthOptions);
     

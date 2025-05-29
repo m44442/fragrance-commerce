@@ -1,11 +1,11 @@
 // src/app/api/users/[userId]/settings/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {

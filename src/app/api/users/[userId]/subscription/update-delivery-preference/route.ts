@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { nextAuthOptions } from "@/lib/next-auth/options";
 import prisma from '@/lib/prisma';
@@ -11,7 +11,7 @@ enum DeliveryPreference {
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {

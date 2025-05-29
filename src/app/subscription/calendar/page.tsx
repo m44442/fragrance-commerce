@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle, PlusCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle } from "lucide-react";
 import Image from "next/image";
 
 const SubscriptionCalendarPage = () => {

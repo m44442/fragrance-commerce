@@ -1,5 +1,5 @@
 // src/app/api/products/[productId]/reviews/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { nextAuthOptions } from "@/lib/next-auth/options";
 import prisma from "@/lib/prisma";
@@ -7,7 +7,7 @@ import { resolveProductId } from "@/lib/product-helpers";
 
 // レビュー一覧を取得
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {
@@ -88,7 +88,7 @@ export async function GET(
 
 // レビューを投稿・更新
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {
@@ -229,7 +229,7 @@ export async function POST(
 
 // レビュー削除
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {
@@ -289,7 +289,7 @@ export async function DELETE(
 
 // 「参考になった」ボタン機能
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {

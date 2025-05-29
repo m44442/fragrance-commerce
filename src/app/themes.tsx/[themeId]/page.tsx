@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Heart, ShoppingBag, Share2 } from "lucide-react";
-import { getAllProducts, client, getThemeProducts } from "@/lib/microcms/client";
+import { getAllProducts, client } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
 // テーマデータの型定義
@@ -206,8 +206,8 @@ const ThemeDetailPage = () => {
           <Image
             src={themeInfo.imageUrl}
             alt={themeInfo.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-custom-peach to-pink-300">

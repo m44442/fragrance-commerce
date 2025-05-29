@@ -1,13 +1,14 @@
 // src/app/api/debug/sync-product/[id]/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { client } from '@/lib/microcms/client';
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const id = params.id;
     
     // MicroCMSから商品を取得
@@ -43,6 +44,7 @@ export async function GET(
       brandId = newBrand.id;
     }
     
+    // ...existing code...
     // 商品の基本データを準備
     const productData = {
       name: microCmsProduct.title,

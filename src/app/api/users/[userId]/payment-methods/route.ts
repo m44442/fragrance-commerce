@@ -1,5 +1,5 @@
 // src/app/api/users/[userId]/payment-methods/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // 支払い方法一覧の取得
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {

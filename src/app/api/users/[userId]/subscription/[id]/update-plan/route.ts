@@ -1,5 +1,5 @@
 // src/app/api/subscription/[id]/update-plan/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
@@ -22,7 +22,7 @@ const STRIPE_PRICE_IDS = {
 };
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

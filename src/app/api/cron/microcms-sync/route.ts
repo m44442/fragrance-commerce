@@ -1,17 +1,17 @@
 // src/app/api/cron/microcms-sync/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/microcms/client';
 import prisma from '@/lib/prisma';
 
 // 認証チェック関数
-const validateCronRequest = (request: Request) => {
+const validateCronRequest = (request: NextRequest) => {
   const authHeader = request.headers.get('Authorization');
   const expectedToken = `Bearer ${process.env.CRON_SECRET_TOKEN}`;
   
   return authHeader === expectedToken;
 };
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   // クロンジョブの認証をチェック
   if (!validateCronRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

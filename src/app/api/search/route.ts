@@ -1,8 +1,8 @@
 // src/app/api/search/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { client } from "@/lib/microcms/client";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const query = url.searchParams.get('q') || '';
   const categories = url.searchParams.getAll('category');
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const maxPrice = url.searchParams.get('maxPrice');
   
   try {
-    let filters = [];
+    const filters = [];
     
     // カテゴリフィルター
     if (categories.length > 0) {

@@ -212,8 +212,10 @@ const CartPage = () => {
                       <Image
                         src={item.product.thumbnailUrl}
                         alt={item.product.name}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                        priority={false}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Filter, ChevronDown, Star } from "lucide-react";
-import { getAllProducts, client, getCategoryProducts } from "@/lib/microcms/client";
+import { getAllProducts, client } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
 // カテゴリデータの型定義

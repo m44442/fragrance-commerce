@@ -1,11 +1,11 @@
 // src/app/api/like/[productId]/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {

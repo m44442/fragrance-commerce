@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { nextAuthOptions } from "@/lib/next-auth/options";
 import prisma from '@/lib/prisma';
@@ -18,7 +18,7 @@ const PLAN_PRICES = {
 };
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
@@ -145,8 +145,8 @@ export async function GET(
         new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null);
     
     // サブスクリプションからプランタイプとアイテムプランを取得
-    let planType = subscription.plan || 'MONTHLY';
-    let itemPlan = `ITEM${itemCount}`;
+    const planType = subscription.plan || 'MONTHLY';
+    const itemPlan = `ITEM${itemCount}`;
 
     // 料金を取得
     const price = getSubscriptionPrice(planType, itemPlan);

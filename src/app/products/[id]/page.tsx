@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import PaymentComponent from "@/components/PaymentComponent";
 import { useTransition } from "react";
-import { Calendar, ShoppingBag, Droplet, Plus, ArrowRight, Star } from "lucide-react";
+import { Calendar, Droplet, Plus, ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewList from "@/components/ReviewList";
@@ -496,11 +496,13 @@ const DetailProduct = () => {
               <div className="relative rounded-lg overflow-hidden mb-6">
                 {/* バナー画像 */}
                 <Image 
-                  src="/subscription_banner.jpg" 
-                  alt="12ヶ月コースなら年間最大¥8,520お得！" 
-                  width={600}
-                  height={300}
-                  className="w-full rounded-lg"
+                  src={product.thumbnail.url}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 70vw, 600px"
+                  className="object-cover object-center rounded-lg"
+                  priority
+                  quality={90}
                 />
                 
                 {/* サブスク開始ボタン */}

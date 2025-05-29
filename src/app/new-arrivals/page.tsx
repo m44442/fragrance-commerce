@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Filter, Tag } from "lucide-react";
+import { ArrowLeft, Tag } from "lucide-react";
 import { getNewArrivals } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 

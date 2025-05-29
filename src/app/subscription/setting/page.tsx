@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, CreditCard, Package, Pause, Play, Settings, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Package, Pause, Play, XCircle } from "lucide-react";
 
 const SubscriptionSettingPage = () => {
   const router = useRouter();

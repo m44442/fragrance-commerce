@@ -1,12 +1,12 @@
 // src/app/api/products/[productId]/reviews/helpful/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { nextAuthOptions } from "@/lib/next-auth/options";
 import prisma from "@/lib/prisma";
 
 // 「参考になった」投票の処理
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
   try {
