@@ -281,14 +281,16 @@ const fetchCategoryData = async () => {
               href={`/products/${product.id}`}
               className="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
             >
-              {/* 商品画像 */}
+                            {/* 商品画像 */}
               <div className="h-40 bg-gray-200 relative">
                 {product.thumbnail?.url ? (
                   <Image 
                     src={product.thumbnail.url} 
                     alt={product.title} 
-                    layout="fill" 
-                    objectFit="cover"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    className="object-cover"
+                    priority={false}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">

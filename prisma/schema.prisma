@@ -51,18 +51,17 @@ model User {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   stripeCustomerId String?
+  role             UserRole          @default(USER)
+  orders           Order[]
   accounts         Account[]
   cart             Cart?
   favorites        Favorite[]
   purchaseHistory  PurchaseHistory[]
   purchases        Purchase[]
+  reviews          Review[]
   sessions         Session[]
   subscriptions    Subscription[]
-  reviews          Review[]
-
-  role          　　UserRole  @default(USER)
-  orders        Order[]   // 注文との関連付け
-
+  password         String?
 
   @@map("users")
 }
@@ -99,6 +98,7 @@ model Product {
   reviewCount       Int                 @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  orderItems        OrderItem[]
   cartItems         CartItem[]
   categories        CategoryOnProduct[]
   favorites         Favorite[]
@@ -107,10 +107,8 @@ model Product {
   brand             Brand               @relation(fields: [brandId], references: [id])
   purchaseHistory   PurchaseHistory[]
   purchases         Purchase[]
-  themeProducts     ThemeProduct[]
   reviews           Review[]
-
-  orderItems    OrderItem[]
+  themeProducts     ThemeProduct[]
 
   @@index([brandId])
   @@map("products")
@@ -314,20 +312,19 @@ model SubscriptionDelivery {
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  rating      Int      // 1-5の星評価
-  comment     String?  // レビューコメント（任意）
-  userId      String
-  productId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isVerified  Boolean  @default(false) // 購入検証済みフラグ
-  helpfulCount Int     @default(0)     // 「参考になった」の数
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  rating       Int
+  comment      String?
+  userId       String
+  productId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isVerified   Boolean  @default(false)
+  helpfulCount Int      @default(0)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId]) // 1ユーザー1商品につき1レビュー
+  @@unique([userId, productId])
   @@index([productId])
   @@index([userId])
   @@map("reviews")
@@ -337,31 +334,31 @@ model Order {
   id                    String      @id @default(cuid())
   orderNumber           String      @unique
   userId                String?
-  user                  User?       @relation(fields: [userId], references: [id])
-  status                String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED
+  status                String      @default("PENDING")
   totalAmount           Float
   shippingAddress       Json
-  items                 OrderItem[]
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
   stripePaymentIntentId String?
-  shippedAt             DateTime?   // 発送日時
-  deliveredAt           DateTime?   // 配達完了日時
-  notificationSent      Boolean     @default(false) // メール通知フラグ
-  adminNotes            String?     // 管理者メモ
-  lastUpdatedBy         String?     // 最終更新者ID
-  isDeleted             Boolean     @default(false) // 削除フラグ（ソフトデリート用）
-  deletedAt             DateTime?   // 削除日時
+  shippedAt             DateTime?
+  deliveredAt           DateTime?
+  notificationSent      Boolean     @default(false)
+  adminNotes            String?
+  lastUpdatedBy         String?
+  isDeleted             Boolean     @default(false)
+  deletedAt             DateTime?
+  user                  User?       @relation(fields: [userId], references: [id])
+  items                 OrderItem[]
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
   productId String
-  product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 enum SubscriptionStatus {
@@ -392,8 +389,8 @@ enum UserRole {
 }
 
 enum OrderStatus {
-  PENDING    // 未発送
-  PROCESSING // 発送準備中
-  SHIPPED    // 発送済み
-  DELIVERED  // 配達済み
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
 }
