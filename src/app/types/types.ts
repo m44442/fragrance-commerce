@@ -1,35 +1,40 @@
+// src/app/types/types.ts
 import NextAuth from "next-auth";
 
 declare module "next-auth" {
-  /**
-   * NextAuth.js のデフォルト型を拡張して id プロパティを追加
-   */
   interface Session {
     user: {
-      id?: string;
+      id: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      role?: string;
     };
   }
 
   interface User {
     id: string;
-    // 必要に応じて他のユーザープロパティを追加
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+    role?: string;
   }
 }
 
-// 商品の型定義を更新
-interface productType {
+// 商品の型定義
+export interface productType {
   id: string;
   title: string;
   description?: string;
   price: number;
-  discountPrice?: number;
-  stock: number;
+  discountPrice?: number | null;
+  samplePrice?: number;
+  specialPrice?: number;
+  stock?: number;
   thumbnail?: { url: string };
   images?: { url: string }[];
   brand: string;
+  brandId?: string;
   brandInfo?: {
     name: string;
     nameJp?: string;
@@ -37,7 +42,7 @@ interface productType {
     logo?: { url: string };
     isFeatured?: boolean;
   };
-  category?: string[];
+  category?: string | string[];
   topNotes?: string;
   middleNotes?: string;
   baseNotes?: string;
@@ -51,7 +56,7 @@ interface productType {
   isPublished?: boolean;
   rank?: number;
   averageRating?: number;
-  reviewCount: number;
+  reviewCount?: number;
   celebrityPick?: boolean;
   celebrityInfo?: {
     name: string;
@@ -61,6 +66,65 @@ interface productType {
   keywords?: string;
   publishedAt?: string;
   updatedAt?: string;
+  createdAt?: string;
+  microCmsId?: string;
+  microCmsUpdatedAt?: Date;
 }
 
-export type { productType };
+// ブランドの型定義
+export interface BrandType {
+  id: string;
+  name: string;
+  nameJp?: string;
+  description?: string;
+  tagline?: string;
+  imageUrl?: string;
+  logo?: { url: string };
+  isFeatured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// カテゴリの型定義
+export interface CategoryType {
+  id: string;
+  name: string;
+  description?: string;
+  type?: 'scent' | 'scene';
+  imageUrl?: string;
+  thumbnail?: { url: string };
+  productCount?: number;
+}
+
+// テーマの型定義
+export interface ThemeType {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  productCount?: number;
+}
+
+// セレブリティ香水の型定義
+export interface CelebrityFragranceType {
+  id: string;
+  fragranceId: string;
+  fragranceName: string;
+  fragranceBrand: string;
+  price: number;
+  thumbnailUrl: string;
+  celebrityName: string;
+  celebrityType: string;
+  description?: string;
+}
+
+// アトマイザーケースの型定義
+export interface AtomizerCaseType {
+  id: string;
+  name: string;
+  color: string;
+  imageUrl: string;
+  image?: { url: string };
+  displayOrder?: number;
+  isActive?: boolean;
+}

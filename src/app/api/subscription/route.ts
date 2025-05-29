@@ -21,17 +21,17 @@ const PLAN_PRICES = {
   }
 };
 
-// Stripeの料金ID (実際の環境で設定)
+// Stripeの料金ID (環境変数から取得)
 const STRIPE_PRICE_IDS = {
   MONTHLY: {
-    ITEM1: process.env.STRIPE_MONTHLY_ITEM1_PRICE_ID,
-    ITEM2: process.env.STRIPE_MONTHLY_ITEM2_PRICE_ID,
-    ITEM3: process.env.STRIPE_MONTHLY_ITEM3_PRICE_ID
+    ITEM1: process.env.STRIPE_MONTHLY_ITEM1_PRICE_ID!,
+    ITEM2: process.env.STRIPE_MONTHLY_ITEM2_PRICE_ID!,
+    ITEM3: process.env.STRIPE_MONTHLY_ITEM3_PRICE_ID!
   },
   ANNUAL: {
-    ITEM1: process.env.STRIPE_ANNUAL_ITEM1_PRICE_ID,
-    ITEM2: process.env.STRIPE_ANNUAL_ITEM2_PRICE_ID,
-    ITEM3: process.env.STRIPE_ANNUAL_ITEM3_PRICE_ID
+    ITEM1: process.env.STRIPE_ANNUAL_ITEM1_PRICE_ID!,
+    ITEM2: process.env.STRIPE_ANNUAL_ITEM2_PRICE_ID!,
+    ITEM3: process.env.STRIPE_ANNUAL_ITEM3_PRICE_ID!
   }
 };
 
@@ -43,11 +43,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { planType, itemPlan, caseColor } = await request.json();
+    const body = await request.json();
+    const planType = body.planType as keyof typeof STRIPE_PRICE_IDS;
+    const itemPlan = body.itemPlan as keyof typeof STRIPE_PRICE_IDS[keyof typeof STRIPE_PRICE_IDS];
+    const caseColor = body.caseColor;
     
     // 入力バリデーション
-    if (!planType || !itemPlan || !['MONTHLY', 'ANNUAL'].includes(planType) || 
-        !['ITEM1', 'ITEM2', 'ITEM3'].includes(itemPlan)) {
+    if (
+      !planType ||
+      !itemPlan ||
+      !['MONTHLY', 'ANNUAL'].includes(planType) ||
+      !['ITEM1', 'ITEM2', 'ITEM3'].includes(itemPlan)
+    ) {
       return NextResponse.json({ error: 'Invalid plan selection' }, { status: 400 });
     }
     
@@ -61,7 +68,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 既存のサブスクリプションをチェック
+    // 既存のアクティブなサブスクリプションをチェック
     const activeSubscription = user.subscriptions.find(sub => 
       sub.status === 'ACTIVE' || sub.status === 'PAUSED'
     );
@@ -95,21 +102,27 @@ export async function POST(request: Request) {
     }
     
     // サブスクリプションプランに基づいた設定
-    const subscriptionPlan = (planType === 'ANNUAL') ? 'ANNUAL' : 'MONTHLY';
+    const subscriptionPlan = planType === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
     const priceId = STRIPE_PRICE_IDS[planType][itemPlan];
     const itemCount = parseInt(itemPlan.replace('ITEM', ''));
     
-    // 最初の1ヶ月は無料トライアル
+    if (!priceId) {
+      return NextResponse.json({ 
+        error: 'Price ID not configured for selected plan' 
+      }, { status: 400 });
+    }
+    
+    // Stripeサブスクリプションを作成
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: priceId }],
-      trial_period_days: 30,
+      trial_period_days: 30, // 30日間無料トライアル
       metadata: {
         userId: user.id,
         planType,
         itemPlan,
         itemCount: itemCount.toString(),
-        caseColor
+        caseColor: caseColor || 'BLACK'
       }
     });
     
@@ -119,17 +132,18 @@ export async function POST(request: Request) {
         userId: user.id,
         stripeCustomerId,
         stripeSubscriptionId: subscription.id,
-        plan: subscriptionPlan as any,
+        plan: subscriptionPlan,
         status: 'ACTIVE',
         nextDeliveryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30日後
+        nextBillingDate: new Date(subscription.current_period_end * 1000),
       }
     });
     
-    // 初回のケース選択を保存
+    // 初回のアトマイザーケース配送を作成
     await prisma.subscriptionDelivery.create({
       data: {
         subscriptionId: newSubscription.id,
-        productName: `初回特典：アトマイザーケース（${caseColor === 'BLACK' ? 'ブラック' : 'シルバー'}）`,
+        productName: `初回特典：アトマイザーケース（${caseColor === 'SILVER' ? 'シルバー' : 'ブラック'}）`,
         status: 'PROCESSING',
         shippingDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3日後に発送予定
       }
@@ -137,10 +151,13 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ 
       subscription: newSubscription,
-      checkoutUrl: subscription.latest_invoice?.hosted_invoice_url
+      stripeSubscriptionId: subscription.id
     });
   } catch (error) {
     console.error('Subscription creation error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

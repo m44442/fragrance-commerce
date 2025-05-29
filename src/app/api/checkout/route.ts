@@ -1,10 +1,10 @@
-// src/app/api/payment-intent/route.ts
+// src/app/api/checkout/route.ts
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
+import prisma from '@/lib/prisma';
 
-// Stripeクライアントの初期化
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
@@ -15,22 +15,82 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { productId, amount } = await request.json();
+    const { productId, amount, products } = await request.json();
     
-    // PaymentIntent作成
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'jpy',
-      metadata: {
-        productId,
-        userId: session.user.id,
-      },
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
+    // 単品購入の場合
+    if (productId && productId !== 'cart') {
+      // 商品情報を取得
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: { brand: true }
+      });
+      
+      if (!product) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'jpy',
+        metadata: {
+          productId,
+          userId: session.user.id,
+          type: 'single_purchase'
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      
+      return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    }
     
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    // カート購入の場合
+    if (productId === 'cart' || products) {
+      let cartItems = [];
+      
+      if (products) {
+        cartItems = products;
+      } else {
+        // カートから商品を取得
+        const cart = await prisma.cart.findUnique({
+          where: { userId: session.user.id },
+          include: {
+            items: {
+              include: {
+                product: {
+                  include: { brand: true }
+                }
+              }
+            }
+          }
+        });
+        
+        if (!cart || cart.items.length === 0) {
+          return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+        }
+        
+        cartItems = cart.items;
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'jpy',
+        metadata: {
+          userId: session.user.id,
+          type: 'cart_purchase',
+          itemCount: cartItems.length.toString()
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      
+      return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    }
+    
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    
   } catch (error) {
     console.error('Error creating PaymentIntent:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

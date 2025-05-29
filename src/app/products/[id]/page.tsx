@@ -340,22 +340,36 @@ const DetailProduct = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-        {/* 画像コンテナに相対配置と余白を追加 */}
-        <div className="relative px-20 pt-10">
-          <Image
-            src={product.thumbnail.url}
-            alt={product.title}
-            className="w-full h-80 object-cover object-center rounded-lg"
-            width={284}
-            height={280}
-          />
-          
-          {/* いいねボタンを右下に配置 */}
+                {/* 画像コンテナに相対配置と余白を追加 */}
+        <div className="relative mx-auto px-4 sm:px-8 md:px-16 pt-6 md:pt-8 max-w-2xl">
+          {/* 最大幅をより厳しく制限するためのコンテナを追加 */}
+          <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+            <div className="relative aspect-square overflow-hidden rounded-lg shadow-md">
+              {product.thumbnail?.url ? (
+                <Image
+                  src={product.thumbnail.url}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 640px) 80vw, (max-width: 768px) 70vw, (max-width: 1024px) 400px, 500px"
+                  className="object-contain object-center rounded-lg"
+                  priority
+                  quality={85}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                  <p className="text-gray-400">画像がありません</p>
+                </div>
+              )}
+            </div>
+          </div>
+                  
+          {/* いいねボタン位置調整 */}
           <button
             onClick={handleLike}
-            className="absolute bottom-3 right-9 p-5 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-300 shadow-sm hover:shadow-md group"
+            className="absolute bottom-3 right-3 sm:bottom-6 sm:right-6 md:right-20 p-3 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-300 shadow-sm hover:shadow-md group"
             aria-label={optimisticLiked ? "いいね済み" : "いいね"}
           >
+            {/* いいねボタンの中身はそのまま */}
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
               viewBox="0 0 24 24" 

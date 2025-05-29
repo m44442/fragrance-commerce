@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,206 +10,135 @@ datasource db {
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String  @map("user_id")
+  userId            String
   type              String
   provider          String
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String?
-  access_token      String?
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
+  sessionToken String   @unique
+  userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
 }
 
 model User {
-  id               String            @id @default(cuid())
+  id               String         @id @default(cuid())
   name             String?
-  email            String?           @unique
-  emailVerified    DateTime?         @map("email_verified")
+  email            String?        @unique
+  emailVerified    DateTime?
   image            String?
-  lineId           String?           @unique
+  password         String?
   phoneNumber      String?
-  address          String?
   postalCode       String?
   prefecture       String?
   city             String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  stripeCustomerId String?
-  role             UserRole          @default(USER)
-  orders           Order[]
+  address          String?
+  role             String         @default("USER")
+  stripeCustomerId String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   accounts         Account[]
-  cart             Cart?
-  favorites        Favorite[]
-  purchaseHistory  PurchaseHistory[]
-  purchases        Purchase[]
-  reviews          Review[]
   sessions         Session[]
+  favorites        Favorite[]
+  cart             Cart?
+  purchases        Purchase[]
   subscriptions    Subscription[]
-  password         String?
-
-  @@map("users")
+  reviews       Review[]
+  reviewHelpful ReviewHelpful[]
 }
 
 model VerificationToken {
   identifier String
-  token      String
+  token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
-  @@map("verification_tokens")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  nameJp      String?
+  description String?
+  logoUrl     String?
+  isFeatured  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Product {
-  id                String              @id @default(cuid())
+  id                String     @id @default(cuid())
   name              String
   brandId           String
   description       String?
-  price             Int
+  price             Int        @default(0)
   discountPrice     Int?
-  stock             Int                 @default(0)
+  stock             Int        @default(0)
   thumbnailUrl      String?
-  microCmsId        String?             @unique
-  microCmsUpdatedAt DateTime?
   topNotes          String?
   middleNotes       String?
   baseNotes         String?
   volume            Int?
   concentration     String?
-  isPublished       Boolean             @default(true)
-  isNew             Boolean             @default(false)
-  isFeatured        Boolean             @default(false)
-  averageRating     Float?
-  reviewCount       Int                 @default(0)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  orderItems        OrderItem[]
-  cartItems         CartItem[]
-  categories        CategoryOnProduct[]
+  isPublished       Boolean    @default(true)
+  isNew             Boolean    @default(false)
+  isFeatured        Boolean    @default(false)
+  microCmsId        String?    @unique
+  microCmsUpdatedAt DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  brand             Brand      @relation(fields: [brandId], references: [id])
   favorites         Favorite[]
-  images            ProductImage[]
-  scents            ProductScent[]
-  brand             Brand               @relation(fields: [brandId], references: [id])
-  purchaseHistory   PurchaseHistory[]
+  cartItems         CartItem[]
   purchases         Purchase[]
-  reviews           Review[]
-  themeProducts     ThemeProduct[]
-
-  @@index([brandId])
-  @@map("products")
+  reviews       Review[]
+  averageRating Float?  @db.DoublePrecision
+  reviewCount   Int     @default(0)
 }
 
-model ProductImage {
-  id        String  @id @default(cuid())
-  productId String
-  url       String
-  alt       String?
-  order     Int     @default(0)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+model Review {
+  id           String   @id @default(cuid())
+  rating       Int      @db.SmallInt // 1-5の範囲
+  comment      String?  @db.Text
+  userId       String
+  productId    String
+  isVerified   Boolean  @default(false) // 購入済みかどうか
+  helpfulCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  helpfulVotes ReviewHelpful[] // 「参考になった」の投票記録
 
-  @@map("product_images")
+  @@unique([userId, productId]) // 1ユーザー1商品につき1レビュー
+  @@index([productId, createdAt])
+  @@index([productId, rating])
+  @@index([isVerified])
 }
 
-model Brand {
-  id          String    @id @default(cuid())
-  name        String
-  nameJp      String?
-  description String?
-  logoUrl     String?
-  microCmsId  String?   @unique
-  isFeatured  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
+model ReviewHelpful {
+  id       String @id @default(cuid())
+  reviewId String
+  userId   String
+  createdAt DateTime @default(now())
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("brands")
-}
-
-model Category {
-  id          String              @id @default(cuid())
-  name        String
-  description String?
-  imageUrl    String?
-  microCmsId  String?             @unique
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  products    CategoryOnProduct[]
-
-  @@map("categories")
-}
-
-model CategoryOnProduct {
-  productId  String
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@id([productId, categoryId])
-  @@map("category_on_product")
-}
-
-model Scent {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  microCmsId  String?        @unique
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  products    ProductScent[]
-
-  @@map("scents")
-}
-
-model ProductScent {
-  productId String
-  scentId   String
-  intensity Int     @default(5)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  scent     Scent   @relation(fields: [scentId], references: [id], onDelete: Cascade)
-
-  @@id([productId, scentId])
-  @@map("product_scents")
-}
-
-model Theme {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  imageUrl    String?
-  microCmsId  String?        @unique
-  isFeatured  Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  products    ThemeProduct[]
-
-  @@map("themes")
-}
-
-model ThemeProduct {
-  themeId   String
-  productId String
-  order     Int     @default(0)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  theme     Theme   @relation(fields: [themeId], references: [id], onDelete: Cascade)
-
-  @@id([themeId, productId])
-  @@map("theme_products")
+  @@unique([reviewId, userId]) // 1ユーザー1レビューにつき1投票
 }
 
 model Favorite {
@@ -216,11 +146,32 @@ model Favorite {
   userId    String
   productId String
   createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId])
-  @@map("favorites")
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
 }
 
 model Purchase {
@@ -228,151 +179,41 @@ model Purchase {
   userId      String
   fragranceId String
   createdAt   DateTime @default(now())
-  fragrance   Product  @relation(fields: [fragranceId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  fragrance   Product  @relation(fields: [fragranceId], references: [id])
 
-  @@map("purchases")
-}
-
-model PurchaseHistory {
-  id            String   @id @default(cuid())
-  userId        String
-  productId     String
-  quantity      Int      @default(1)
-  price         Int
-  paymentMethod String?
-  paymentId     String?
-  status        String   @default("completed")
-  createdAt     DateTime @default(now())
-  product       Product  @relation(fields: [productId], references: [id])
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("purchase_history")
-}
-
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  updatedAt DateTime   @updatedAt
-  items     CartItem[]
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("carts")
-}
-
-model CartItem {
-  id        String  @id @default(cuid())
-  cartId    String
-  productId String
-  quantity  Int
-  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
-
-  @@map("cart_items")
-}
-
-model Subscription {
-  id                    String                 @id @default(cuid())
-  userId                String
-  status                SubscriptionStatus     @default(ACTIVE)
-  plan                  SubscriptionPlan       @default(MONTHLY)
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?
-  nextDeliveryDate      DateTime?
-  startDate             DateTime               @default(now())
-  endDate               DateTime?
-  canceledAt            DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  deliveryDate          Int?
-  deliveryWeek          Int?
-  nextBillingDate       DateTime?
-  paymentMethodId       String?
-  preferCustomSelection Boolean                @default(false)
-  deliveries            SubscriptionDelivery[]
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("subscriptions")
-}
-
-model SubscriptionDelivery {
-  id             String         @id @default(cuid())
-  subscriptionId String
-  productId      String?
-  productName    String
-  status         DeliveryStatus @default(PENDING)
-  shippingDate   DateTime?
-  deliveredDate  DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  customSelected Boolean        @default(false)
-  subscription   Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-
-  @@map("subscription_deliveries")
-}
-
-model Review {
-  id           String   @id @default(cuid())
-  rating       Int
-  comment      String?
-  userId       String
-  productId    String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  isVerified   Boolean  @default(false)
-  helpfulCount Int      @default(0)
-  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@index([productId])
-  @@index([userId])
-  @@map("reviews")
-}
-
-model Order {
-  id                    String      @id @default(cuid())
-  orderNumber           String      @unique
-  userId                String?
-  status                String      @default("PENDING")
-  totalAmount           Float
-  shippingAddress       Json
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  stripePaymentIntentId String?
-  shippedAt             DateTime?
-  deliveredAt           DateTime?
-  notificationSent      Boolean     @default(false)
-  adminNotes            String?
-  lastUpdatedBy         String?
-  isDeleted             Boolean     @default(false)
-  deletedAt             DateTime?
-  user                  User?       @relation(fields: [userId], references: [id])
-  items                 OrderItem[]
-}
-
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Int
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  @@unique([userId, fragranceId])
 }
 
 enum SubscriptionStatus {
   ACTIVE
   PAUSED
   CANCELED
-  EXPIRED
 }
 
 enum SubscriptionPlan {
   MONTHLY
-  QUARTERLY
-  BIANNUAL
   ANNUAL
+}
+
+model Subscription {
+  id                    String               @id @default(cuid())
+  userId                String
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?              @unique
+  plan                  SubscriptionPlan     @default(MONTHLY)
+  status                SubscriptionStatus   @default(ACTIVE)
+  nextDeliveryDate      DateTime?
+  nextBillingDate       DateTime?
+  preferCustomSelection Boolean              @default(false)
+  deliveryOption        String?
+  canceledAt            DateTime?
+  endDate               DateTime?
+  paymentFailed         Boolean              @default(false)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  user                  User                 @relation(fields: [userId], references: [id])
+  deliveries            SubscriptionDelivery[]
 }
 
 enum DeliveryStatus {
@@ -383,14 +224,16 @@ enum DeliveryStatus {
   FAILED
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
+model SubscriptionDelivery {
+  id             String         @id @default(cuid())
+  subscriptionId String
+  productId      String?
+  productName    String?
+  status         DeliveryStatus @default(PENDING)
+  shippingDate   DateTime?
+  deliveredDate  DateTime?
+  customSelected Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  subscription   Subscription   @relation(fields: [subscriptionId], references: [id])
 }

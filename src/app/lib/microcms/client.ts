@@ -51,9 +51,68 @@ export const getRankingProducts = async () => {
   });
 };
 
-// src/app/lib/microcms/client.ts に追加
+// ブランド情報とカテゴリ情報取得関数
+export const getFeaturedBrands = async () => {
+  try {
+    return await client.getList({
+      endpoint: 'brands',
+      queries: {
+        filters: 'isFeatured[equals]true',
+        limit: 10
+      }
+    });
+  } catch (error) {
+    console.error("Failed to fetch featured brands:", error);
+    // フォールバック: 商品からブランドを抽出
+    const products = await getAllProducts();
+    const uniqueBrands = Array.from(new Set(
+      products.contents.map(p => p.brand).filter(Boolean)
+    )).slice(0, 10);
+    
+    return {
+      contents: uniqueBrands.map((brand, index) => ({
+        id: `brand-${index}`,
+        name: brand,
+        nameJp: brand,
+        tagline: `${brand}の香水コレクション`,
+        imageUrl: "/Rumini.jpg"
+      }))
+    };
+  }
+};
+
+export const getCelebrityFragrances = async () => {
+  try {
+    return await client.getList({
+      endpoint: 'celebrity_fragrances',
+      queries: {
+        limit: 20
+      }
+    });
+  } catch (error) {
+    console.error("Failed to fetch celebrity fragrances:", error);
+    // フォールバック: 通常商品から一部を選択
+    const products = await getAllProducts();
+    const selectedProducts = products.contents.slice(0, 6);
+    
+    return {
+      contents: selectedProducts.map((product, index) => ({
+        id: `celebrity-${index}`,
+        fragranceId: product.id,
+        fragranceName: product.title,
+        fragranceBrand: product.brand,
+        price: product.price,
+        thumbnailUrl: product.thumbnail?.url || '/Rumini.jpg',
+        celebrityName: ['佐藤健', '橋本環奈', '菅田将暉', '新垣結衣', '山田涼介', '石原さとみ'][index],
+        celebrityType: ['俳優', '女優', '俳優', '女優', 'アイドル', '女優'][index],
+        description: `${product.title}の魅力的な香り`
+      }))
+    };
+  }
+};
+
+// 商品をブランドごとにグループ化
 export const getProductsByBrand = async () => {
-  // 商品データを取得
   const result = await client.getList<productType>({
     endpoint: "rumini",
     queries: {
@@ -70,7 +129,6 @@ export const getProductsByBrand = async () => {
       if (!brandMap.has(product.brand)) {
         brandMap.set(product.brand, []);
       }
-      
       brandMap.get(product.brand)?.push(product);
     }
   });
@@ -121,7 +179,7 @@ export const getUniqueThemes = async () => {
   const allProducts = await client.getList<productType>({
     endpoint: "rumini",
     queries: {
-      fields: "id,title,themes,thumbnail,description", // 必要なフィールドのみ
+      fields: "id,title,themes,thumbnail,description",
       limit: 100
     }
   });
@@ -133,7 +191,6 @@ export const getUniqueThemes = async () => {
     if (product.themes && Array.isArray(product.themes)) {
       product.themes.forEach(themeId => {
         if (!themeMap.has(themeId)) {
-          // テーマIDに基づく表示名を生成
           const themeName = (() => {
             if (themeId === 'popular') return '人気ランキング';
             if (themeId === 'new-trend') return '新着トレンド';
@@ -142,7 +199,6 @@ export const getUniqueThemes = async () => {
             if (themeId === 'office') return 'オフィス向け';
             if (themeId === 'date') return 'デート向け';
             if (themeId === 'seasonal') return '季節のおすすめ';
-            // その他のカスタムテーマ
             return themeId
               .split('-')
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -158,10 +214,8 @@ export const getUniqueThemes = async () => {
           });
         }
         
-        // このテーマに紐づく商品を追加
         themeMap.get(themeId).products.push(product);
         
-        // サムネイルがない場合、最初の商品のサムネイルを使用
         if (!themeMap.get(themeId).thumbnail && product.thumbnail) {
           themeMap.get(themeId).thumbnail = product.thumbnail;
         }
@@ -169,7 +223,6 @@ export const getUniqueThemes = async () => {
     }
   });
   
-  // テーマ情報を配列に変換
   const themes = Array.from(themeMap.values()).map(theme => ({
     id: theme.id,
     name: theme.name,
@@ -182,4 +235,3 @@ export const getUniqueThemes = async () => {
     contents: themes
   };
 };
-
