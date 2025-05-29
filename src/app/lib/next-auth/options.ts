@@ -54,38 +54,30 @@ export const nextAuthOptions: NextAuthOptions = {
     ],
     
     adapter: PrismaAdapter(prisma),
-    callbacks: {
-        async session({ session, token, user }) {
-            // セッションにユーザー情報（特に役割情報）を追加
-            session.user = session.user || {};
-            session.user.role = user.role;
-            return session;
-        },
-    },
     pages: {
         signIn: '/login', // デフォルトのサインインページ
         error: '/login', // エラー時のリダイレクト先
     },
     session: {
-    strategy: "jwt", // JWT を使用していることを確認
-    maxAge: 30 * 24 * 60 * 60, // 30日間
-  },
-  callbacks: {
-    // JWT コールバックでユーザー ID を含めていることを確認
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-      }
-      return token;
+        strategy: "jwt", // JWT を使用していることを確認
+        maxAge: 30 * 24 * 60 * 60, // 30日間
     },
-    // セッションコールバックで JWT からユーザー ID を転送
-    session: async ({ session, token }) => {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-      }
-      return session;
-    },
-},
+    callbacks: {
+        // JWT コールバックでユーザー ID を含めていることを確認
+        jwt: async ({ token, user }) => {
+            if (user) {
+                token.id = user.id;
+                token.role = (user as any).role;
+            }
+            return token;
+        },
+        // セッションコールバックで JWT からユーザー ID を転送
+        session: async ({ session, token }) => {
+            if (token && session.user) {
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
+            }
+            return session;
+        }
+    }
 };
