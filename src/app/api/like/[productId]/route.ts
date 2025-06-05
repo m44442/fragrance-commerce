@@ -6,9 +6,10 @@ import prisma from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
+     const { productId } = await params;
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
@@ -24,7 +25,7 @@ export async function POST(
         await prisma.favorite.create({
           data: {
             userId: session.user.id,
-            productId: params.productId,
+            productId: productId,
           },
         });
       } catch (error) {
@@ -36,7 +37,7 @@ export async function POST(
       await prisma.favorite.deleteMany({
         where: {
           userId: session.user.id,
-          productId: params.productId,
+          productId: productId,
         },
       });
     }
@@ -50,9 +51,10 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
+    const { productId } = await params;
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
@@ -64,7 +66,7 @@ export async function GET(
     const favorite = await prisma.favorite.findFirst({
       where: {
         userId: session.user.id,
-        productId: params.productId,
+        productId: (await params).productId,
       },
     });
     

@@ -8,10 +8,10 @@ import { resolveProductId } from "@/lib/product-helpers";
 // レビュー一覧を取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
 
     if (!productId) {
       return NextResponse.json(
@@ -89,7 +89,7 @@ export async function GET(
 // レビューを投稿・更新
 export async function POST(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -107,7 +107,7 @@ export async function POST(
     }
 
     const userId = session.user.id;
-    const { productId } = params;
+    const { productId } = await params;
 
     if (!productId) {
       return NextResponse.json(
@@ -230,7 +230,7 @@ export async function POST(
 // レビュー削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -240,7 +240,7 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const { productId } = params;
+    const { productId } = await params;
 
     console.log("DELETE /api/products/[productId]/reviews called with ID:", productId);
 
@@ -290,7 +290,7 @@ export async function DELETE(
 // 「参考になった」ボタン機能
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -299,7 +299,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { productId } = params;
+    const { productId } = await params;
     const { reviewId, helpful } = await request.json();
 
     console.log("PATCH /api/products/[productId]/reviews called with:", { productId, reviewId, helpful });

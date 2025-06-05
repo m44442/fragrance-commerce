@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 // 「参考になった」投票の処理
 export async function POST(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -103,7 +103,7 @@ export async function POST(
 // ユーザーの投票状態を取得
 export async function GET(
   request: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
