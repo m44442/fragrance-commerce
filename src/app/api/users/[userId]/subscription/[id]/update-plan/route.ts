@@ -61,7 +61,7 @@ export async function POST(
     
     // サブスクリプションプランに基づいた設定
     const subscriptionPlan = (planType === 'ANNUAL') ? 'ANNUAL' : 'MONTHLY';
-    const priceId = STRIPE_PRICE_IDS[planType][itemPlan];
+    const priceId = STRIPE_PRICE_IDS[planType as keyof typeof STRIPE_PRICE_IDS][itemPlan as keyof typeof STRIPE_PRICE_IDS.MONTHLY];
     
     // Stripeのサブスクリプションを更新
     if (subscription.stripeSubscriptionId) {
@@ -73,9 +73,10 @@ export async function POST(
           },
         ],
         metadata: {
-          ...subscription,
-          planType,
-          itemPlan,
+          subscriptionId: subscription.id,
+          userId: subscription.userId,
+          planType: planType,
+          itemPlan: itemPlan,
         },
       });
     }

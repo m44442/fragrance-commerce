@@ -8,8 +8,8 @@ const SubscriptionPage = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
-  const [subscription, setSubscription] = useState(null);
-  const [error, setError] = useState(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // サブスクリプション情報を取得
   useEffect(() => {
@@ -90,7 +90,7 @@ const SubscriptionPage = () => {
   }
 
   // サブスクリプションステータスの表示用文字列
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'ACTIVE':
         return 'アクティブ';
@@ -104,7 +104,7 @@ const SubscriptionPage = () => {
   };
 
   // 日付のフォーマット
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null) => {
     if (!dateString) return '未定';
     const date = new Date(dateString);
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
@@ -179,7 +179,7 @@ const SubscriptionPage = () => {
           <h2 className="text-lg font-semibold mb-4">お届け予定の商品</h2>
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4">
-              {subscription.upcomingDeliveries.map((delivery, index) => (
+              {subscription.upcomingDeliveries.map((delivery: any, index: number) => (
                 <div key={index} className="flex items-center py-3 border-b last:border-b-0">
                   <div className="h-16 w-16 bg-gray-100 rounded relative overflow-hidden mr-4">
                     {delivery.productThumbnail && (

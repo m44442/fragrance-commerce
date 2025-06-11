@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-const PurchaseSuccess = () => {
+const PurchaseSuccessContent = () => {
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get("session_id");
 
@@ -50,6 +50,14 @@ const PurchaseSuccess = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const PurchaseSuccess = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PurchaseSuccessContent />
+    </Suspense>
   );
 };
 

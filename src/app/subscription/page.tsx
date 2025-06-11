@@ -245,8 +245,8 @@ const SubscriptionPage = () => {
                   <td className={`p-4 border text-center ${selectedPlanType === "ANNUAL" ? "bg-custom-peach bg-opacity-70" : ""}`}>
                     <div>
                       <div className="font-bold">¥{plans[1].items[index].price.toLocaleString()}/月</div>
-                      {plans[1].items[index].discount && (
-                        <div className="text-green-600 text-xs">{plans[1].items[index].discount}</div>
+                      {(plans[1].items[index] as any).discount && (
+                        <div className="text-green-600 text-xs">{(plans[1].items[index] as any).discount}</div>
                       )}
                     </div>
                   </td>

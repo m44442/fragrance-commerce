@@ -9,7 +9,7 @@ const TrendingRankings = async () => {
   const { contents } = await getAllProducts();
   console.log(contents);
 
-  const sortedContents = contents.sort((a: productType, b: productType) => a.rank - b.rank);
+  const sortedContents = contents.sort((a: productType, b: productType) => (a.rank || 0) - (b.rank || 0));
 
   return (
     <div className="px-4 py-6 bg-gray-50">
@@ -33,7 +33,7 @@ const TrendingRankings = async () => {
                 
                 {/* 商品画像 */}
                 <div className="h-40 bg-gray-200 relative">
-                  {contents.thumbnail.url ? (
+                  {contents.thumbnail?.url ? (
                     <Image 
                       src={contents.thumbnail.url} 
                       alt={contents.title} 

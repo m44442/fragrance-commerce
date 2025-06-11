@@ -247,7 +247,7 @@ const PaymentComponent = ({
   }
 
   const appearance = {
-    theme: 'stripe',
+    theme: 'stripe' as const,
     variables: {
       colorPrimary: '#9333ea',
     },
@@ -256,55 +256,55 @@ const PaymentComponent = ({
   const options = {
     clientSecret,
     appearance,
-    locale: 'ja',
+    locale: 'ja' as const,
     // カスタム決済方法の指定
     customPaymentMethods: [
       {
         id: 'cpmt_1RGvICDP6em8TiNFEoCpZ1en',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'Paidyでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvJVDP6em8TiNF4aykL5f9',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'PayPayでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvLxDP6em8TiNF8bdzVD5B',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'メルペイでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvMuDP6em8TiNFvXdu275T',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'auPayでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvMTDP6em8TiNFsBcPSYHB',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'd払いでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvMhDP6em8TiNFA9gc2Cas',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: '楽天ペイでお支払い',
         }
       },
       {
         id: 'cpmt_1RGvJlDP6em8TiNFQdcnoGxi',
         options: {
-          type: 'static',
+          type: 'static' as const,
           subtitle: 'PayPalでお支払い',
         }
       }

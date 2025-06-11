@@ -27,7 +27,7 @@ const PopularRankingSection = async () => {
                 
                 {/* 商品画像 */}
                 <div className="h-40 bg-gray-200 relative">
-                  {contents.thumbnail.url ? (
+                  {contents.thumbnail?.url ? (
                     <Image 
                       src={contents.thumbnail.url} 
                       alt={contents.title} 

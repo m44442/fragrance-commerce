@@ -18,7 +18,7 @@ interface CategoryData {
 
 const CategoryDetailPage = () => {
   const params = useParams();
-  const categoryId = params.categoryId as string;
+  const categoryId = params?.categoryId as string;
   const [products, setProducts] = useState<productType[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<productType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +119,7 @@ const fetchCategoryData = async () => {
           
           return productDesc.includes(categoryName) || 
                 productTitle.includes(categoryName) ||
-                (product.category && product.category.toLowerCase().includes(categoryName));
+                (product.category && typeof product.category === 'string' && product.category.toLowerCase().includes(categoryName));
         });
         
         // それでも見つからない場合はランダムに8つ表示

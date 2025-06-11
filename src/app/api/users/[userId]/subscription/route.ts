@@ -189,7 +189,7 @@ function getSubscriptionPrice(planType: string, itemPlan: string): number {
   const validItemPlan = ['ITEM1', 'ITEM2', 'ITEM3'].includes(itemPlan) ? itemPlan : defaultItemPlan;
   
   // 料金を返す
-  return PLAN_PRICES[validPlanType][validItemPlan] || PLAN_PRICES[defaultPlanType][defaultItemPlan];
+  return PLAN_PRICES[validPlanType as keyof typeof PLAN_PRICES][validItemPlan as keyof typeof PLAN_PRICES.MONTHLY] || PLAN_PRICES[defaultPlanType as keyof typeof PLAN_PRICES][defaultItemPlan as keyof typeof PLAN_PRICES.MONTHLY];
 }
 
 // プラン名を生成する関数（アイテム数を含む）
