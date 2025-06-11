@@ -1,20 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/next-auth/options';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { nextAuthOptions } from "@/lib/next-auth/options"; // インポート名を修正
+import prisma from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> } // Promiseに変更
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
+    const { userId } = await context.params; // awaitを追加
+    const session = await getServerSession(nextAuthOptions); // インポート名を修正
+
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: '認証が必要です' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "認証が必要です" }, { status: 401 });
     }
 
     // 管理者権限をチェック
@@ -22,18 +20,18 @@ export async function GET(
       where: { email: session.user.email },
     });
 
-    if (!adminUser || adminUser.role !== 'ADMIN') {
+    if (!adminUser || adminUser.role !== "ADMIN") {
       return NextResponse.json(
-        { message: '管理者権限が必要です' },
+        { message: "管理者権限が必要です" },
         { status: 403 }
       );
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: params.userId },
+      where: { id: userId }, // params.userIdからuserIdに変更
       include: {
         orders: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10,
         },
         cartItems: {
@@ -52,16 +50,16 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json(
-        { message: 'ユーザーが見つかりません' },
+        { message: "ユーザーが見つかりません" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ user });
   } catch (error) {
-    console.error('Admin user fetch error:', error);
+    console.error("Admin user fetch error:", error);
     return NextResponse.json(
-      { message: 'ユーザー情報の取得に失敗しました' },
+      { message: "ユーザー情報の取得に失敗しました" },
       { status: 500 }
     );
   }
@@ -69,16 +67,14 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> } // Promiseに変更
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
+    const { userId } = await context.params; // awaitを追加
+    const session = await getServerSession(nextAuthOptions); // インポート名を修正
+
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: '認証が必要です' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "認証が必要です" }, { status: 401 });
     }
 
     // 管理者権限をチェック
@@ -86,9 +82,9 @@ export async function PATCH(
       where: { email: session.user.email },
     });
 
-    if (!adminUser || adminUser.role !== 'ADMIN') {
+    if (!adminUser || adminUser.role !== "ADMIN") {
       return NextResponse.json(
-        { message: '管理者権限が必要です' },
+        { message: "管理者権限が必要です" },
         { status: 403 }
       );
     }
@@ -97,18 +93,18 @@ export async function PATCH(
 
     let updatedUser;
 
-    if (action === 'activate') {
+    if (action === "activate") {
       updatedUser = await prisma.user.update({
-        where: { id: params.userId },
-        data: { 
+        where: { id: userId }, // params.userIdからuserIdに変更
+        data: {
           emailVerified: new Date(),
           // その他のアクティベーション処理
         },
       });
-    } else if (action === 'deactivate') {
+    } else if (action === "deactivate") {
       updatedUser = await prisma.user.update({
-        where: { id: params.userId },
-        data: { 
+        where: { id: userId }, // params.userIdからuserIdに変更
+        data: {
           emailVerified: null,
           // その他の非アクティブ化処理
         },
@@ -116,16 +112,16 @@ export async function PATCH(
     } else {
       // 一般的な更新
       updatedUser = await prisma.user.update({
-        where: { id: params.userId },
+        where: { id: userId }, // params.userIdからuserIdに変更
         data: updateData,
       });
     }
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    console.error('Admin user update error:', error);
+    console.error("Admin user update error:", error);
     return NextResponse.json(
-      { message: 'ユーザー情報の更新に失敗しました' },
+      { message: "ユーザー情報の更新に失敗しました" },
       { status: 500 }
     );
   }
@@ -133,16 +129,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> } // Promiseに変更
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
+    const { userId } = await context.params; // awaitを追加
+    const session = await getServerSession(nextAuthOptions); // インポート名を修正
+
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: '認証が必要です' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "認証が必要です" }, { status: 401 });
     }
 
     // 管理者権限をチェック
@@ -150,17 +144,18 @@ export async function DELETE(
       where: { email: session.user.email },
     });
 
-    if (!adminUser || adminUser.role !== 'ADMIN') {
+    if (!adminUser || adminUser.role !== "ADMIN") {
       return NextResponse.json(
-        { message: '管理者権限が必要です' },
+        { message: "管理者権限が必要です" },
         { status: 403 }
       );
     }
 
     // 自分自身を削除しようとしている場合はエラー
-    if (adminUser.id === params.userId) {
+    if (adminUser.id === userId) {
+      // params.userIdからuserIdに変更
       return NextResponse.json(
-        { message: '自分自身を削除することはできません' },
+        { message: "自分自身を削除することはできません" },
         { status: 400 }
       );
     }
@@ -169,27 +164,27 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       // カートアイテムを削除
       await tx.cartItem.deleteMany({
-        where: { userId: params.userId },
+        where: { userId: userId }, // params.userIdからuserIdに変更
       });
 
       // 注文はそのまま残す（データの整合性のため）
       // 必要に応じて注文のユーザーIDをnullに設定
       await tx.order.updateMany({
-        where: { userId: params.userId },
+        where: { userId: userId }, // params.userIdからuserIdに変更
         data: { userId: null },
       });
 
       // ユーザーを削除
       await tx.user.delete({
-        where: { id: params.userId },
+        where: { id: userId }, // params.userIdからuserIdに変更
       });
     });
 
-    return NextResponse.json({ message: 'ユーザーを削除しました' });
+    return NextResponse.json({ message: "ユーザーを削除しました" });
   } catch (error) {
-    console.error('Admin user delete error:', error);
+    console.error("Admin user delete error:", error);
     return NextResponse.json(
-      { message: 'ユーザーの削除に失敗しました' },
+      { message: "ユーザーの削除に失敗しました" },
       { status: 500 }
     );
   }
