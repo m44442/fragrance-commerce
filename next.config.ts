@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // App Routerを使用していることを明示
+  experimental: {
+    typedRoutes: false,
+  },
   images: {
     domains: ['images.microcms-assets.io'], // MicroCMSの画像ドメイン
     remotePatterns: [

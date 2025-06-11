@@ -53,62 +53,41 @@ export const getRankingProducts = async () => {
 
 // ブランド情報とカテゴリ情報取得関数
 export const getFeaturedBrands = async () => {
-  try {
-    return await client.getList({
-      endpoint: 'brands',
-      queries: {
-        filters: 'isFeatured[equals]true',
-        limit: 10
-      }
-    });
-  } catch (error) {
-    console.error("Failed to fetch featured brands:", error);
-    // フォールバック: 商品からブランドを抽出
-    const products = await getAllProducts();
-    const uniqueBrands = Array.from(new Set(
-      products.contents.map(p => p.brand).filter(Boolean)
-    )).slice(0, 10);
-    
-    return {
-      contents: uniqueBrands.map((brand, index) => ({
-        id: `brand-${index}`,
-        name: brand,
-        nameJp: brand,
-        tagline: `${brand}の香水コレクション`,
-        imageUrl: "/Rumini.jpg"
-      }))
-    };
-  }
+  // brandsエンドポイントが存在しないため、商品からブランドを抽出
+  const products = await getAllProducts();
+  const uniqueBrands = Array.from(new Set(
+    products.contents.map(p => p.brand).filter(Boolean)
+  )).slice(0, 10);
+  
+  return {
+    contents: uniqueBrands.map((brand, index) => ({
+      id: `brand-${index}`,
+      name: brand,
+      nameJp: brand,
+      tagline: `${brand}の香水コレクション`,
+      imageUrl: "/default_icon.png"
+    }))
+  };
 };
 
 export const getCelebrityFragrances = async () => {
-  try {
-    return await client.getList({
-      endpoint: 'celebrity_fragrances',
-      queries: {
-        limit: 20
-      }
-    });
-  } catch (error) {
-    console.error("Failed to fetch celebrity fragrances:", error);
-    // フォールバック: 通常商品から一部を選択
-    const products = await getAllProducts();
-    const selectedProducts = products.contents.slice(0, 6);
-    
-    return {
-      contents: selectedProducts.map((product, index) => ({
-        id: `celebrity-${index}`,
-        fragranceId: product.id,
-        fragranceName: product.title,
-        fragranceBrand: product.brand,
-        price: product.price,
-        thumbnailUrl: product.thumbnail?.url || '/Rumini.jpg',
-        celebrityName: ['佐藤健', '橋本環奈', '菅田将暉', '新垣結衣', '山田涼介', '石原さとみ'][index],
-        celebrityType: ['俳優', '女優', '俳優', '女優', 'アイドル', '女優'][index],
-        description: `${product.title}の魅力的な香り`
-      }))
-    };
-  }
+  // celebrity_fragrances エンドポイントが存在しないため、フォールバック処理を使用
+  const products = await getAllProducts();
+  const selectedProducts = products.contents.slice(0, 6);
+  
+  return {
+    contents: selectedProducts.map((product, index) => ({
+      id: `celebrity-${index}`,
+      fragranceId: product.id,
+      fragranceName: product.title,
+      fragranceBrand: product.brand,
+      price: product.price,
+      thumbnailUrl: product.thumbnail?.url || '/Rumini.jpg',
+      celebrityName: ['佐藤健', '橋本環奈', '菅田将暉', '新垣結衣', '山田涼介', '石原さとみ'][index],
+      celebrityType: ['俳優', '女優', '俳優', '女優', 'アイドル', '女優'][index],
+      description: `${product.title}の魅力的な香り`
+    }))
+  };
 };
 
 // 商品をブランドごとにグループ化

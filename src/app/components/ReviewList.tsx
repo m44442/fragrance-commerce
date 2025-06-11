@@ -1,3 +1,5 @@
+"use client";
+
 // src/components/ReviewList.tsx
 import React, { useState } from 'react';
 import { Star, ThumbsUp, Check } from 'lucide-react';

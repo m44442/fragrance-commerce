@@ -25,17 +25,8 @@ export async function GET(
       },
       include: {
         fragrance: {
-          select: {
-            id: true,
-            name: true,
-            brand: {
-              select: {
-                name: true,
-              },
-            },
-            price: true,
-            thumbnailUrl: true,
-            microCmsId: true,
+          include: {
+            brand: true,
           },
         },
       },
@@ -51,7 +42,7 @@ export async function GET(
       fragranceId: purchase.fragranceId,
       fragrance: {
         id: purchase.fragrance.id,
-        title: purchase.fragrance?.name,
+        title: purchase.fragrance.name,
         brand: purchase.fragrance.brand?.name || '',
         price: purchase.fragrance.price,
         thumbnail: {

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Tag, Droplet, ChevronRight } from "lucide-react";
-import { client } from "@/lib/microcms/client";
+import { client, getAllProducts } from "@/lib/microcms/client";
 
 // カテゴリの型定義
 interface Category {
@@ -25,93 +25,34 @@ const CategoriesPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // 香りの系統カテゴリを取得
-        const scentResult = await client.getList({
-          endpoint: 'categories',
-          queries: {
-            filters: 'type[equals]scent',
-            limit: 100
-          }
-        });
+        // categoriesエンドポイントが存在しないため、直接フォールバックデータを使用
+        // 商品データから実際のカテゴリを抽出
+        const products = await getAllProducts();
+        const allCategories = products.contents.flatMap(p => p.category || []);
+        const uniqueCategories = Array.from(new Set(allCategories));
 
-        // シーン別カテゴリを取得
-        const sceneResult = await client.getList({
-          endpoint: 'categories',
-          queries: {
-            filters: 'type[equals]scene',
-            limit: 100
-          }
-        });
+        // 香りの系統カテゴリ（フローラル、シトラス等）
+        const scentCategories = uniqueCategories
+          .filter(cat => cat.includes('(') && cat.includes(')'))
+          .map((cat, index) => ({
+            id: `scent-${index}`,
+            name: cat,
+            description: `${cat.split('(')[0]}系の香り`,
+            count: products.contents.filter(p => p.category?.includes(cat)).length
+          }));
 
-        // 各カテゴリの商品数を取得
-        const scentCategoriesWithCount = await Promise.all(
-          (scentResult.contents || []).map(async (category) => {
-            try {
-              // 各カテゴリに関連する商品数を取得
-              const productResult = await client.getList({
-                endpoint: 'rumini',
-                queries: {
-                  filters: `category[contains]${category.id}`,
-                  limit: 1,
-                  fields: 'id'
-                }
-              });
-              
-              return {
-                id: category.id,
-                name: category.name,
-                description: category.description || '',
-                imageUrl: category.imageUrl || category.thumbnail?.url,
-                productCount: productResult.totalCount || 0
-              };
-            } catch (countError) {
-              console.error(`Failed to fetch product count for category ${category.id}:`, countError);
-              return {
-                id: category.id,
-                name: category.name,
-                description: category.description || '',
-                imageUrl: category.imageUrl || category.thumbnail?.url,
-                productCount: 0
-              };
-            }
-          })
-        );
+        // シーン別カテゴリ（デイリーユース等）
+        const sceneCategories = uniqueCategories
+          .filter(cat => cat.includes('daily') || cat.includes('デイリー') || cat.includes('ユース'))
+          .map((cat, index) => ({
+            id: `scene-${index}`,
+            name: cat,
+            description: `${cat}に最適な香り`,
+            count: products.contents.filter(p => p.category?.includes(cat)).length
+          }));
 
-        const sceneCategoriesWithCount = await Promise.all(
-          (sceneResult.contents || []).map(async (category) => {
-            try {
-              // 各カテゴリに関連する商品数を取得
-              const productResult = await client.getList({
-                endpoint: 'rumini',
-                queries: {
-                  filters: `scenes[contains]${category.id}`,
-                  limit: 1,
-                  fields: 'id'
-                }
-              });
-              
-              return {
-                id: category.id,
-                name: category.name,
-                description: category.description || '',
-                imageUrl: category.imageUrl || category.thumbnail?.url,
-                productCount: productResult.totalCount || 0
-              };
-            } catch (countError) {
-              console.error(`Failed to fetch product count for category ${category.id}:`, countError);
-              return {
-                id: category.id,
-                name: category.name,
-                description: category.description || '',
-                imageUrl: category.imageUrl || category.thumbnail?.url,
-                productCount: 0
-              };
-            }
-          })
-        );
-
-        setScentCategories(scentCategoriesWithCount);
-        setSceneCategories(sceneCategoriesWithCount);
+        setScentCategories(scentCategories);
+        setSceneCategories(sceneCategories);
         setIsLoading(false);
       } catch (error) {
         console.error("Failed to fetch categories:", error);

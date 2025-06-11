@@ -1,15 +1,44 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getAllProducts } from "@/lib/microcms/client";
 import { productType } from "@/types/types";
 
-const TrendingRankings = async () => {
-  const { contents } = await getAllProducts();
-  console.log(contents);
+const TrendingRankings = () => {
+  const [contents, setContents] = useState<productType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { contents: fetchedContents } = await getAllProducts();
+        console.log(fetchedContents);
+        setContents(fetchedContents);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const sortedContents = contents.sort((a: productType, b: productType) => (a.rank || 0) - (b.rank || 0));
+
+  if (loading) {
+    return (
+      <div className="px-4 py-6 bg-gray-50">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">人気のアイテム</h2>
+        </div>
+        <div className="text-center py-8">
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-6 bg-gray-50">

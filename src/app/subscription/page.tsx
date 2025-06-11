@@ -54,40 +54,17 @@ const SubscriptionPage = () => {
   useEffect(() => {
     const fetchAtomizerCases = async () => {
       try {
-        // microCMSからアトマイザーケースを取得
-        // エンドポイント名はmicroCMSの設定に合わせて変更してください
-        const response = await client.getList({
-          endpoint: 'atomizer_cases',
-          queries: { filters: 'isActive[equals]true' } // 有効なケースのみ取得
-        });
-        
-        if (response.contents && response.contents.length > 0) {
-          const cases = response.contents.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            color: item.color,
-            imageUrl: item.image?.url || '/Rumini.jpg' // 画像URLがない場合はデフォルト画像
-          }));
-          
-          // 表示順でソート（もしmicroCMSのdisplayOrderフィールドがある場合）
-          cases.sort((a: any, b: any) => {
-            return (a.displayOrder || 999) - (b.displayOrder || 999);
-          });
-          
-          setAtomizerCases(cases);
-          // 最初のケースをデフォルト選択
-          if (cases.length > 0) {
-            setSelectedCase(cases[0].id);
-          }
-        } else {
-          // microCMSにデータがない場合はフォールバックデータを使用
-          const fallbackCases = [
-            { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/Rumini.jpg" },
-            { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/Rumini.jpg" },
-          ];
-          setAtomizerCases(fallbackCases);
-          setSelectedCase(fallbackCases[0].id);
-        }
+        // atomizer_casesエンドポイントが存在しないため、直接フォールバック処理を使用
+        // 将来的にエンドポイントが作成された場合はコメントアウトを解除
+        // atomizer_casesエンドポイントが存在しないため、直接フォールバックデータを使用
+        const fallbackCases = [
+          { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/default_icon.png" },
+          { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/default_icon.png" },
+          { id: "GOLD", name: "ゴールド", color: "gold", imageUrl: "/default_icon.png" },
+          { id: "ROSE_GOLD", name: "ローズゴールド", color: "#e8b4b8", imageUrl: "/default_icon.png" },
+        ];
+        setAtomizerCases(fallbackCases);
+        setSelectedCase(fallbackCases[0].id);
       } catch (error) {
         console.error("Error fetching atomizer cases:", error);
         // エラー時もフォールバックデータを使用

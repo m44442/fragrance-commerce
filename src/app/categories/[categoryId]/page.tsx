@@ -39,25 +39,14 @@ const fetchCategoryData = async () => {
   try {
     setIsLoading(true);
     
-    // カテゴリ情報をMicroCMSから取得
-    try {
-      const categoryResult = await client.getListDetail({
-        endpoint: 'categories',
-        contentId: categoryId,
-      });
-      
-      if (categoryResult) {
-        setCategory({
-          id: categoryResult.id,
-          name: categoryResult.name,
-          description: categoryResult.description || '',
-          bannerUrl: categoryResult.imageUrl || categoryResult.thumbnail?.url
-        });
-      }
-    } catch (categoryError) {
-      console.error("Failed to fetch category details:", categoryError);
-      // エラーがあっても続行 - デフォルトのカテゴリ情報を使用
-    }
+    // categoriesエンドポイントが存在しないため、カテゴリIDからカテゴリ情報を生成
+    const decodedCategoryId = decodeURIComponent(categoryId);
+    setCategory({
+      id: categoryId,
+      name: decodedCategoryId,
+      description: `${decodedCategoryId}の香水一覧`,
+      bannerUrl: "/default_icon.png"
+    });
     
     // カテゴリに関連する商品の取得
     let categoryProducts: productType[] = [];

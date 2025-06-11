@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/components/ReviewForm.tsx
 import React, { useState } from 'react';
 import { Star, CheckCircle } from 'lucide-react';

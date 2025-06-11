@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 
 interface ItemSelectionButtonProps {
@@ -8,6 +10,7 @@ interface ItemSelectionButtonProps {
 const ItemSelectionButton: React.FC<ItemSelectionButtonProps> = ({ onClick, className = '' }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`flex flex-col items-center justify-center p-4 ${className}`}
       aria-label="アイテムを追加"

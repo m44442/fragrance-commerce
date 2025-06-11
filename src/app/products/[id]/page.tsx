@@ -75,13 +75,31 @@ const DetailProduct = () => {
   // 商品のいいね状態を確認
   useEffect(() => {
     const checkLikeStatus = async () => {
-      if (!session?.user?.id || !params?.id) return;
+      if (!session?.user?.id || !params?.id) {
+        console.log("いいね状態チェックをスキップ:", {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          productId: params?.id
+        });
+        return;
+      }
+      
+      console.log("いいね状態をチェック中:", {
+        userId: session.user.id,
+        productId: params.id
+      });
       
       try {
         const response = await fetch(`/api/like/${params.id}`);
+        console.log("いいね状態チェックのレスポンスステータス:", response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log("いいね状態データ:", data);
           setIsLiked(data.liked);
+        } else {
+          const errorData = await response.json();
+          console.error("いいね状態チェックエラー:", errorData);
         }
       } catch (error) {
         console.error("いいね状態の確認に失敗:", error);
@@ -166,20 +184,39 @@ const DetailProduct = () => {
       return;
     }
     
+    console.log("いいねボタンがクリックされました", {
+      userId: session.user?.id,
+      productId: params?.id,
+      currentLiked: optimisticLiked
+    });
+    
     // 楽観的更新をstartTransitionでラップする
     startTransition(() => {
       addOptimisticLiked(!optimisticLiked);
     });
     
     try {
-      await fetch(`/api/like/${params?.id}`, {
+      const response = await fetch(`/api/like/${params?.id}`, {
         method: "POST",
         body: JSON.stringify({ liked: !optimisticLiked }),
         headers: {
           "Content-Type": "application/json",
         },
       });
-      setIsLiked(!optimisticLiked);
+      
+      const data = await response.json();
+      console.log("いいねAPIレスポンス:", data);
+      
+      if (response.ok) {
+        setIsLiked(!optimisticLiked);
+        console.log("いいね状態が更新されました:", !optimisticLiked);
+      } else {
+        console.error("いいねAPIエラー:", data);
+        // エラー時は楽観的更新を復元
+        startTransition(() => {
+          addOptimisticLiked(optimisticLiked);
+        });
+      }
     } catch (error) {
       console.error("Error liking the product:", error);
       // エラー時も楽観的更新の復元をトランジション内で行う
@@ -218,12 +255,24 @@ const DetailProduct = () => {
         },
       });
       
-      const data = await response.json();
-      
       if (!response.ok) {
-        alert(`カートに追加できませんでした: ${data.error || response.statusText}`);
-        console.error("カート追加エラー:", data);
+        let errorMessage = response.statusText;
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch (jsonError) {
+          console.error("Failed to parse error response:", jsonError);
+        }
+        alert(`カートに追加できませんでした: ${errorMessage}`);
         return;
+      }
+
+      // レスポンスをJSONとして処理
+      try {
+        const data = await response.json();
+        console.log("Cart item added:", data);
+      } catch (jsonError) {
+        console.error("Failed to parse success response:", jsonError);
       }
       
       setIsAddedToCart(true);
@@ -276,10 +325,23 @@ const DetailProduct = () => {
       });
       
       if (!response.ok) {
-        const data = await response.json();
-        alert(`カートに追加できませんでした: ${data.error || response.statusText}`);
-        console.error("カート追加エラー:", data);
+        let errorMessage = response.statusText;
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch (jsonError) {
+          console.error("Failed to parse error response:", jsonError);
+        }
+        alert(`カートに追加できませんでした: ${errorMessage}`);
         return;
+      }
+      
+      // レスポンスをJSONとして処理
+      try {
+        const data = await response.json();
+        console.log("Cart item added:", data);
+      } catch (jsonError) {
+        console.error("Failed to parse success response:", jsonError);
       }
       
       // カート画面に遷移

@@ -52,7 +52,61 @@ export async function POST(
     }
 
     const { productId } = await params;
-    const { quantity = 1 } = await request.json();
+    const { quantity = 1, isSample = false } = await request.json();
+
+    // MicroCMSのIDの場合、対応するProductレコードを探すか作成
+    let product = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { microCmsId: productId }
+        ]
+      }
+    });
+
+    if (!product) {
+      // MicroCMSから商品情報を取得して、Productテーブルに作成
+      try {
+        const { getAllProducts } = await import('@/lib/microcms/client');
+        const { contents } = await getAllProducts();
+        const microCmsProduct = contents.find(p => p.id === productId);
+        
+        if (!microCmsProduct) {
+          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
+
+        // ブランドを取得または作成
+        let brand = await prisma.brand.findUnique({
+          where: { name: microCmsProduct.brand }
+        });
+
+        if (!brand) {
+          brand = await prisma.brand.create({
+            data: { name: microCmsProduct.brand }
+          });
+        }
+
+        // Productレコードを作成
+        product = await prisma.product.create({
+          data: {
+            name: microCmsProduct.title,
+            brandId: brand.id,
+            description: microCmsProduct.description?.replace(/<[^>]*>/g, '') || '',
+            price: microCmsProduct.price,
+            stock: 100, // デフォルト在庫
+            thumbnailUrl: microCmsProduct.thumbnail?.url,
+            microCmsId: microCmsProduct.id,
+            microCmsUpdatedAt: new Date(microCmsProduct.updatedAt),
+            isPublished: true,
+            isNew: microCmsProduct.isNew || false,
+            isFeatured: microCmsProduct.isFeatured || false
+          }
+        });
+      } catch (createError) {
+        console.error('Error creating product record:', createError);
+        return NextResponse.json({ error: 'Failed to create product record' }, { status: 500 });
+      }
+    }
 
     // ユーザーのカートを取得または作成
     let cart = await prisma.cart.findUnique({
@@ -65,11 +119,12 @@ export async function POST(
       });
     }
 
-    // カート内の既存アイテムを確認
+    // カート内の既存アイテムを確認（お試しサイズと通常サイズは別管理）
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
-        productId: productId
+        productId: product.id, // 実際のProductレコードのIDを使用
+        isSample: isSample
       }
     });
 
@@ -86,8 +141,9 @@ export async function POST(
       const newItem = await prisma.cartItem.create({
         data: {
           cartId: cart.id,
-          productId: productId,
-          quantity: quantity
+          productId: product.id, // 実際のProductレコードのIDを使用
+          quantity: quantity,
+          isSample: isSample
         },
         include: { product: true }
       });
