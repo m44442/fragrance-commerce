@@ -6,20 +6,22 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // 購入履歴を取得
     const purchases = await prisma.purchase.findMany({
       where: {
-        userId: params.userId,
+        userId: userId,
       },
       include: {
         fragrance: {

@@ -19,11 +19,10 @@ const PLAN_PRICES = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // パラメータを先に取得（非同期でのアクセスを避ける）
-    const userId = params.userId;
+    const { userId } = await params;
     
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);

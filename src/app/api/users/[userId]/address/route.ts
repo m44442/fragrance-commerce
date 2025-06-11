@@ -6,13 +6,15 @@ import prisma from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -20,7 +22,7 @@ export async function PUT(
     
     // 住所情報を更新
     const updatedUser = await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: {
         postalCode,
         prefecture,

@@ -5,13 +5,15 @@ import prisma from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -20,7 +22,7 @@ export async function POST(
     // サブスクリプションを取得
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: params.userId,
+        userId: userId,
         OR: [
           { status: 'ACTIVE' },
           { status: 'PAUSED' }

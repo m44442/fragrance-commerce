@@ -9,9 +9,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
@@ -22,7 +24,7 @@ export async function POST(
     // サブスクリプション情報を取得
     const subscription = await prisma.subscription.findUnique({
       where: {
-        id: params.id,
+        id: id,
         userId: session.user.id,
       },
     });
@@ -47,7 +49,7 @@ export async function POST(
     // データベースを更新
     const updatedSubscription = await prisma.subscription.update({
       where: {
-        id: params.id,
+        id: id,
       },
       data: {
         status: 'PAUSED',

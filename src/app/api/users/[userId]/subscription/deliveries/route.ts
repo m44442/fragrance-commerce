@@ -5,20 +5,22 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // アクティブか一時停止中のサブスクリプションを取得
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: params.userId,
+        userId: userId,
         OR: [
           { status: 'ACTIVE' },
           { status: 'PAUSED' }

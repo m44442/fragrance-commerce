@@ -10,19 +10,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 // 支払い方法一覧の取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // ユーザー情報を取得
     const user = await prisma.user.findUnique({
-      where: { id: params.userId }
+      where: { id: userId }
     });
     
     if (!user?.stripeCustomerId) {
@@ -45,13 +47,15 @@ export async function GET(
 // 新しい支払い方法を追加
 export async function POST(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -59,7 +63,7 @@ export async function POST(
     
     // ユーザー情報を取得
     const user = await prisma.user.findUnique({
-      where: { id: params.userId }
+      where: { id: userId }
     });
     
     if (!user?.stripeCustomerId) {
@@ -88,12 +92,14 @@ export async function POST(
 // 支払い方法を削除
 export async function DELETE(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+    
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
