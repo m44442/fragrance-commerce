@@ -24,13 +24,21 @@ export async function POST(request: NextRequest) {
     let stripeCustomerId = user?.stripeCustomerId;
     
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user?.email || undefined,
-        name: user?.name || undefined,
+      const customerData: any = {
         metadata: {
-          userId: user?.id
+          userId: user?.id || ''
         }
-      });
+      };
+      
+      if (user?.email) {
+        customerData.email = user.email;
+      }
+      
+      if (user?.name) {
+        customerData.name = user.name;
+      }
+      
+      const customer = await stripe.customers.create(customerData);
       
       stripeCustomerId = customer.id;
       
