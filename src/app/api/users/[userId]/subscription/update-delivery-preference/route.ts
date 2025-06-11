@@ -12,11 +12,10 @@ enum DeliveryPreference {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // パラメータを先に取得（非同期でのアクセスを避ける）
-    const userId = params.userId;
+    const { userId } = await params;
     
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
