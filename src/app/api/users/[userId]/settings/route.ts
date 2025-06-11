@@ -41,7 +41,11 @@ export async function PUT(
     console.error('Error updating user settings:', error);
     
     // メールアドレスの一意性制約違反のエラーを確認
-    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+    if (error && typeof error === 'object' && 'code' in error && 
+        error.code === 'P2002' && 'meta' in error && 
+        error.meta && typeof error.meta === 'object' && 
+        'target' in error.meta && Array.isArray(error.meta.target) &&
+        error.meta.target.includes('email')) {
       return NextResponse.json(
         { error: 'このメールアドレスは既に使用されています' },
         { status: 400 }
