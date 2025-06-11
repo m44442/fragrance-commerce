@@ -10,8 +10,8 @@ export const nextAuthOptions: NextAuthOptions = {
     debug: false,
     providers: [
         LineProvider({
-            clientId: process.env.LINE_CHANNEL_ID!,
-            clientSecret: process.env.LINE_CHANNEL_SECRET!
+            clientId: process.env.LINE_CHANNEL_ID || '',
+            clientSecret: process.env.LINE_CHANNEL_SECRET || ''
         }),
         CredentialsProvider({
             name: 'Credentials',
