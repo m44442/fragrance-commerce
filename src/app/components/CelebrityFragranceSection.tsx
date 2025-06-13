@@ -75,7 +75,7 @@ const CelebrityFragrancesPage = () => {
       {/* ヘッダー部分 */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">推し香水コレクション</h2>
-        <Link href="/celebrity-fragrances" className="text-custom-peach text-sm font-medium hover:text-custom-peach-dark transition-colors flex items-center">
+        <Link href="/celebrity-picks" className="text-custom-peach text-sm font-medium hover:text-custom-peach-dark transition-colors flex items-center">
           もっと見る
           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
