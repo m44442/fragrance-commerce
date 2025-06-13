@@ -7,6 +7,7 @@ import BrandSection from "@/components/BrandSection";
 import NewArrivalsSection from "@/components/NewArrivalsSection";
 import TrendingRankings from "./components/TrendingRankings";
 import CelebrityFragrancesPage from "./components/CelebrityFragranceSection";
+import CategoryProductGrid from "./components/CategoryProductGrid";
 
 
 export default function Home() {
@@ -17,6 +18,9 @@ export default function Home() {
       
       {/* カテゴリ検索 */}
       <CategorySection />
+
+      {/* カテゴリ別商品グリッド */}
+      <CategoryProductGrid />
 
       {/* 推し香水セクション (新規追加) */}
       <CelebrityFragrancesPage />

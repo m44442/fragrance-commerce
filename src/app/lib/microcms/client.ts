@@ -246,3 +246,32 @@ export const getUniqueThemes = async () => {
     contents: themes
   };
 };
+
+// アトマイザーケース取得関数
+export const getAtomizerCases = async () => {
+  if (!client) {
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return { contents: [], totalCount: 0, offset: 0, limit: 20 };
+  }
+  
+  return await (client as any).getList({
+    endpoint: "atomizer_case",
+    queries: { 
+      limit: 100,
+      orders: '-publishedAt' // 新しい順
+    }
+  });
+};
+
+// アトマイザーケース詳細取得
+export const getAtomizerCaseDetail = async (contentId: string) => {
+  if (!client) {
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return null;
+  }
+  
+  return await (client as any).getListDetail({
+    endpoint: "atomizer_case",
+    contentId,
+  });
+};
