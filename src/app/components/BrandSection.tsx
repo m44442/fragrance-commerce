@@ -51,14 +51,14 @@ const BrandSection = () => {
           <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent"></div>
         </div>
       ) : (
-        <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
-          {brands.map((brand) => (
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6">
+          {brands.slice(0, 6).map((brand) => (
             <Link 
               key={brand.id} 
               href={`/brands/${brand.id}`}
-              className="flex-shrink-0 w-60 bg-white rounded-lg overflow-hidden shadow"
+              className="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow"
             >
-              <div className="h-32 bg-gray-200 relative">
+              <div className="aspect-square bg-gray-200 relative">
                 {brand.imageUrl ? (
                   <Image 
                     src={brand.imageUrl} 
@@ -67,16 +67,16 @@ const BrandSection = () => {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
                     {brand.name}
                   </div>
                 )}
               </div>
-              <div className="p-4">
-                <h3 className="text-lg font-bold">{brand.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">{brand.nameJp}</p>
-                <div className="bg-custom-peach bg-opacity-20 rounded-full px-3 py-1">
-                  <p className="text-sm text-custom-peach font-medium">{brand.tagline}</p>
+              <div className="p-1.5 md:p-3">
+                <h3 className="text-xs font-bold truncate">{brand.name}</h3>
+                <p className="text-xs text-gray-600 truncate mb-1">{brand.nameJp}</p>
+                <div className="bg-custom-peach bg-opacity-20 rounded-full px-2 py-0.5">
+                  <p className="text-xs text-custom-peach font-medium truncate">{brand.tagline}</p>
                 </div>
               </div>
             </Link>

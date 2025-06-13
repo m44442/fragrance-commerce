@@ -85,16 +85,16 @@ const CelebrityFragrancesPage = () => {
       
       
       {/* 商品グリッド - ホームページでは6件のみ表示 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6">
         {filteredCelebrities.slice(0, 6).map(item => (
           <Link key={item.id} href={`/products/${item.fragranceId}`} className="bg-white rounded-lg shadow overflow-hidden block hover:shadow-lg transition-shadow">
-            <div className="relative h-64">
+            <div className="relative aspect-square">
               {item.thumbnailUrl ? (
                 <Image 
                   src={item.thumbnailUrl} 
                   alt={item.fragranceName} 
-                  layout="fill" 
-                  objectFit="cover"
+                  fill
+                  className="object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
@@ -103,29 +103,22 @@ const CelebrityFragrancesPage = () => {
               )}
               
               {/* 推し名表示のタグ */}
-              <div className="absolute top-4 left-4 bg-custom-peach text-white px-3 py-1 rounded-full flex items-center">
-                <Star className="w-4 h-4 mr-1" />
-                <span className="font-medium">{item.celebrityName}</span>
+              <div className="absolute top-1 left-1 bg-custom-peach text-white px-1.5 py-0.5 rounded-full flex items-center text-xs">
+                <Star className="w-3 h-3 mr-0.5" />
+                <span className="font-medium text-xs truncate max-w-16">{item.celebrityName}</span>
               </div>
               
               {/* お気に入りボタン */}
-              <button className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
-                <Heart className="w-5 h-5 text-gray-500 hover:text-red-500" />
+              <button className="absolute top-1 right-1 w-6 h-6 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
+                <Heart className="w-3 h-3 text-gray-500 hover:text-red-500" />
               </button>
             </div>
             
-            <div className="p-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-500">{item.fragranceBrand}</span>
-                <span className="text-sm text-custom-peach">{item.celebrityType}</span>
-              </div>
-              
-              <h2 className="text-lg font-medium mb-2">{item.fragranceName}</h2>
-              
-              <p className="text-gray-600 text-sm mb-4">{item.description}</p>
-              
-              <div className="flex justify-center items-center">
-                <span className="text-lg font-bold">¥{item.price?.toLocaleString()}</span>
+            <div className="p-1.5 md:p-3">
+              <p className="text-xs text-gray-500 truncate mb-1">{item.fragranceBrand}</p>
+              <h2 className="text-xs font-medium mb-1 line-clamp-2 leading-tight">{item.fragranceName}</h2>
+              <div className="text-xs font-bold text-custom-peach">
+                ¥{item.price?.toLocaleString()}
               </div>
             </div>
           </Link>

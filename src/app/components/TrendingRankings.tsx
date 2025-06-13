@@ -55,10 +55,10 @@ const TrendingRankings = () => {
       <p className="text-sm text-gray-500 mb-4">
         この1週間でアクセス数が急増したアイテムをご紹介します。
       </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6">
           {sortedContents.slice(0, 6).map((contents: productType) => (
             <Link key={contents.id} href={`/products/${contents.id}`} className="bg-white rounded-lg shadow overflow-hidden block hover:shadow-lg transition-shadow">
-              <div className="relative h-64">
+              <div className="relative aspect-square">
                 {contents.thumbnail?.url ? (
                   <Image 
                     src={contents.thumbnail.url} 
@@ -73,27 +73,22 @@ const TrendingRankings = () => {
                 )}
                 
                 {/* ランキングバッジ */}
-                <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-full flex items-center">
-                  <Star className="w-4 h-4 mr-1" />
+                <div className="absolute top-1 left-1 bg-yellow-500 text-white px-1.5 py-0.5 rounded-full flex items-center text-xs">
+                  <Star className="w-3 h-3 mr-0.5" />
                   <span className="font-medium">#{contents.rank}</span>
                 </div>
                 
                 {/* お気に入りボタン */}
-                <button className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-gray-500 hover:text-red-500" />
+                <button className="absolute top-1 right-1 w-6 h-6 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
+                  <Heart className="w-3 h-3 text-gray-500 hover:text-red-500" />
                 </button>
               </div>
               
-              <div className="p-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-500">{contents.brand}</span>
-                  <span className="text-sm text-yellow-600">人気</span>
-                </div>
-                
-                <h2 className="text-lg font-medium mb-2">{contents.title}</h2>
-                
-                <div className="flex justify-center items-center">
-                  <span className="text-lg font-bold">¥{contents.price.toLocaleString()}</span>
+              <div className="p-1.5 md:p-3">
+                <p className="text-xs text-gray-500 truncate mb-1">{contents.brand}</p>
+                <h2 className="text-xs font-medium mb-1 line-clamp-2 leading-tight">{contents.title}</h2>
+                <div className="text-xs font-bold text-custom-peach">
+                  ¥{contents.price.toLocaleString()}
                 </div>
               </div>
             </Link>

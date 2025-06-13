@@ -27,19 +27,6 @@ const CategoryProductGrid = () => {
         const result = await getAllProducts();
         const products = result.contents || [];
         
-        // カテゴリごとに商品を分類
-        const categorizedProducts: {[key: string]: productType[]} = {};
-        
-        categories.forEach(category => {
-          categorizedProducts[category.id] = products
-            .filter((product: any) => {
-              const productCategory = product.category || "";
-              return productCategory.toLowerCase().includes(category.id.toLowerCase());
-            })
-            .slice(0, 6); // 各カテゴリ6商品（横3×縦2列）
-        });
-        
-        setProductsByCategory(categorizedProducts);
         setIsLoading(false);
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -67,74 +54,37 @@ const CategoryProductGrid = () => {
         <p className="text-gray-600 text-center">お好みの香りのタイプから選んでみてください</p>
       </div>
 
-      {categories.map((category) => {
-        const products = productsByCategory[category.id] || [];
-        
-        if (products.length === 0) return null;
-
-        return (
-          <div key={category.id} className="mb-8">
-            {/* カテゴリヘッダー */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">{category.name}</h3>
-                <p className="text-sm text-gray-600">{category.description}</p>
+      <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6">
+        {categories.map((category) => (
+          <Link
+            key={category.id}
+            href={`/categories/${category.id}`}
+            className="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            {/* カテゴリ画像 */}
+            <div className="aspect-square bg-gradient-to-br from-custom-peach/20 to-custom-peach/40 relative flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-2xl mb-2">
+                  {category.id === 'floral' && '🌸'}
+                  {category.id === 'citrus' && '🍊'}
+                  {category.id === 'woody' && '🌳'}
+                  {category.id === 'oriental' && '🏛️'}
+                  {category.id === 'fresh' && '💧'}
+                  {category.id === 'gourmand' && '🍰'}
+                </div>
+                <h3 className="text-xs font-bold text-gray-800">{category.name}</h3>
               </div>
-              <Link 
-                href={`/categories/${category.id}`}
-                className="flex items-center text-custom-peach hover:text-custom-peach-dark transition-colors"
-              >
-                <span className="text-sm font-medium">もっと見る</span>
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
             </div>
-
-            {/* 商品グリッド: 横3×縦2列 (スマホ・タブレット共通) */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-6">
-              {products.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
-                  className="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                >
-                  {/* 商品画像 */}
-                  <div className="aspect-square bg-gray-200 relative">
-                    {product.thumbnail?.url ? (
-                      <Image 
-                        src={product.thumbnail.url} 
-                        alt={product.title} 
-                        fill
-                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 16vw"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                        No Image
-                      </div>
-                    )}
-                    {product.isNew && (
-                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                        NEW
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* 商品情報 */}
-                  <div className="p-2">
-                    <p className="text-xs text-gray-500 truncate mb-1">{product.brand}</p>
-                    <h4 className="text-xs sm:text-sm font-medium line-clamp-2 mb-1 leading-tight">
-                      {product.title}
-                    </h4>
-                    <p className="text-sm font-semibold text-custom-peach">
-                      ¥{product.price?.toLocaleString()}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+            
+            {/* カテゴリ情報 */}
+            <div className="p-1.5 md:p-3">
+              <p className="text-xs text-gray-600 line-clamp-2 leading-tight">
+                {category.description}
+              </p>
             </div>
-          </div>
-        );
-      })}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };

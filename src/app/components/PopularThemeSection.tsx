@@ -61,11 +61,11 @@ const PopularThemeSection = () => {
           <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {themes.map((theme) => (
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6">
+          {themes.slice(0, 6).map((theme) => (
             <Link key={theme.id} href={`/themes/${theme.id}`} className="block">
               <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                <div className="h-32 bg-gray-200 relative">
+                <div className="aspect-square bg-gray-200 relative">
                   {theme.imageUrl ? (
                     <img 
                       src={theme.imageUrl} 
@@ -78,8 +78,8 @@ const PopularThemeSection = () => {
                     </div>
                   )}
                 </div>
-                <div className="p-3">
-                  <h3 className="text-sm font-medium">{theme.title}</h3>
+                <div className="p-1.5 md:p-3">
+                  <h3 className="text-xs font-medium line-clamp-2 leading-tight">{theme.title}</h3>
                 </div>
               </div>
             </Link>
