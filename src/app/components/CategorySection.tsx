@@ -16,7 +16,7 @@ const categories = [
   { id: 2, name: "ランキング", icon: Award, href: "/rankings" },
   { id: 3, name: "新着", icon: Sparkles, href: "/new-arrivals" },
   { id: 4, name: "カテゴリ", icon: Droplet, href: "/categories" },
-  { id: 5, name: "推し香水", icon: Heart, href: "/favorites" },
+  { id: 5, name: "推し香水", icon: Heart, href: "/celebrity-picks" },
 ];
 
 const CategorySection = () => {
