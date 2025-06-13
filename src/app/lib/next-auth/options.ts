@@ -129,3 +129,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+// Ensure nextAuthOptions is exported for backward compatibility
+export const nextAuthOptions = authOptions;

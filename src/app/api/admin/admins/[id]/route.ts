@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // 管理者削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,7 +20,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // 削除対象のユーザーを取得
     const targetUser = await prisma.user.findUnique({

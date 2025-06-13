@@ -34,15 +34,18 @@ export async function GET(
           orderBy: { createdAt: "desc" },
           take: 10,
         },
-        cartItems: {
+        cart: {
           include: {
-            product: true,
+            items: {
+              include: {
+                product: true,
+              },
+            },
           },
         },
         _count: {
           select: {
             orders: true,
-            cartItems: true,
           },
         },
       },
@@ -162,16 +165,18 @@ export async function DELETE(
 
     // 関連データを先に削除
     await prisma.$transaction(async (tx) => {
-      // カートアイテムを削除
+      // カートアイテムを削除（カート経由で）
       await tx.cartItem.deleteMany({
-        where: { userId: userId }, // params.userIdからuserIdに変更
+        where: { 
+          cart: {
+            userId: userId
+          }
+        }, 
       });
 
-      // 注文はそのまま残す（データの整合性のため）
-      // 必要に応じて注文のユーザーIDをnullに設定
-      await tx.order.updateMany({
-        where: { userId: userId }, // params.userIdからuserIdに変更
-        data: { userId: null },
+      // 注文を削除（データの整合性のため）
+      await tx.order.deleteMany({
+        where: { userId: userId },
       });
 
       // ユーザーを削除

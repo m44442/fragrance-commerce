@@ -60,13 +60,11 @@ export async function GET(request: NextRequest) {
           createdAt: {
             gte: startDate,
           },
-          status: {
-            not: 'CANCELLED',
-          },
+          canceledAt: null, // Only include non-cancelled orders
         },
         select: {
           createdAt: true,
-          totalAmount: true,
+          total: true,
         },
         orderBy: {
           createdAt: 'asc',
@@ -93,17 +91,17 @@ export async function GET(request: NextRequest) {
         prisma.user.count(),
         prisma.order.count({
           where: {
-            status: { not: 'CANCELLED' },
+            canceledAt: null,
             createdAt: { gte: startDate },
           },
         }),
         prisma.order.aggregate({
           where: {
-            status: { not: 'CANCELLED' },
+            canceledAt: null,
             createdAt: { gte: startDate },
           },
-          _sum: { totalAmount: true },
-          _avg: { totalAmount: true },
+          _sum: { total: true },
+          _avg: { total: true },
         }),
       ]),
 
@@ -124,7 +122,7 @@ export async function GET(request: NextRequest) {
       const dateKey = order.createdAt.toISOString().split('T')[0];
       const existing = salesByDate.get(dateKey) || { amount: 0, orders: 0 };
       salesByDate.set(dateKey, {
-        amount: existing.amount + (order.totalAmount || 0),
+        amount: existing.amount + (order.total || 0),
         orders: existing.orders + 1,
       });
     });
@@ -152,8 +150,8 @@ export async function GET(request: NextRequest) {
 
     // コンバージョンメトリクス
     const [totalUsers, totalOrders, orderAggregation] = conversionData;
-    const totalRevenue = orderAggregation._sum.totalAmount || 0;
-    const averageOrderValue = orderAggregation._avg.totalAmount || 0;
+    const totalRevenue = orderAggregation._sum.total || 0;
+    const averageOrderValue = orderAggregation._avg.total || 0;
     const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers) * 100 : 0;
 
     // トップ商品（モックデータ - 実際のデータがある場合は調整）

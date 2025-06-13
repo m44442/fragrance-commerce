@@ -45,8 +45,12 @@ export async function POST(request: NextRequest) {
           include: {
             product: {
               select: {
-                title: true,
-                brand: true
+                name: true,
+                brand: {
+                  select: {
+                    name: true
+                  }
+                }
               }
             }
           }
@@ -108,8 +112,8 @@ export async function POST(request: NextRequest) {
         order.orderItems.forEach((item, index) => {
           const row = [
             ...baseInfo,
-            `"${item.product?.title || 'Unknown Product'}"`,
-            `"${item.product?.brand || ''}"`,
+            `"${item.product?.name || 'Unknown Product'}"`,
+            `"${item.product?.brand?.name || ''}"`,
             item.quantity.toString(),
             item.price.toString(),
             index === 0 ? order.total.toString() : '' // 合計は最初の商品行にのみ表示

@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { client } from '@/lib/microcms/client';
 
 /**
@@ -128,4 +128,29 @@ export async function resolveProductId(id: string): Promise<string | null> {
   }
 
   return product.id;
+}
+
+/**
+ * Get all products for sitemap generation
+ */
+export async function getAllProducts() {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        isPublished: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return products;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
 }

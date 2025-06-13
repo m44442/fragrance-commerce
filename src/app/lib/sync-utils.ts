@@ -1,6 +1,6 @@
 // src/lib/sync-utils.ts
 import { client } from '@/lib/microcms/client';
-import prisma from './prisma';
+import { prisma } from '@/lib/prisma';
 import { productType } from '@/types/types';
 
 export async function syncProductToDatabase(microCmsProduct: productType) {

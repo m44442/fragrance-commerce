@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           include: {
             product: {
               select: {
-                title: true,
+                name: true,
                 price: true
               }
             }
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         email: order.user.email
       },
       products: order.orderItems.map(item => ({
-        name: item.product?.title || 'Unknown Product',
+        name: item.product?.name || 'Unknown Product',
         quantity: item.quantity,
         price: item.price
       })),

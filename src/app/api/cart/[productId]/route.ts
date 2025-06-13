@@ -198,7 +198,7 @@ export async function DELETE(
   { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
