@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
 
 // 開発環境ではnodemailerを使わないため、本番環境でのみ初期化

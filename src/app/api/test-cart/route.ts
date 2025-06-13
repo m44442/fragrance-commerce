@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Test cart error:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     let errorMessage = 'Unknown error';
     if (error instanceof Error) {

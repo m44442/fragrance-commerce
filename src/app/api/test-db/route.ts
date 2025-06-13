@@ -50,14 +50,14 @@ export async function GET() {
     
   } catch (error) {
     console.error('Database test error:', error);
-    console.error('Error name:', error.name);
-    console.error('Error code:', error.code);
+    console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('Error code:', error && typeof error === 'object' && 'code' in error ? error.code : 'Unknown');
     
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      errorName: error.name,
-      errorCode: error.code,
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorCode: error && typeof error === 'object' && 'code' in error ? error.code : 'Unknown',
       stack: error instanceof Error ? error.stack : 'No stack trace'
     }, { status: 500 });
   }

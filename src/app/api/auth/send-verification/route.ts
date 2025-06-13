@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
 
 // メール送信設定
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: 587,
   secure: false,

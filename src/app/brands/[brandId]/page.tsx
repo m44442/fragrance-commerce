@@ -227,7 +227,7 @@ export default function BrandPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-500 mb-1">
-                          {product.category?.join(", ")}
+                          {Array.isArray(product.category) ? product.category.join(", ") : product.category}
                         </p>
                         <p className="text-lg font-semibold text-gray-900">
                           ¥{product.price.toLocaleString()}

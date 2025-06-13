@@ -18,10 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    const title = `${product.name} | 香水・フレグランス | Rumini`;
+    const title = `${product.title} | 香水・フレグランス | Rumini`;
     const description = product.description 
       ? `${product.description.substring(0, 140)}...` 
-      : `${product.name}の詳細ページ。香水・フレグランス専門ECサイトRuminiで取り扱い中。`;
+      : `${product.title}の詳細ページ。香水・フレグランス専門ECサイトRuminiで取り扱い中。`;
     
     const productUrl = `${baseUrl}/products/${params.id}`;
     const imageUrl = product.images?.[0]?.url || `${baseUrl}/default-product.jpg`;
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      keywords: `${product.name}, 香水, フレグランス, ${product.brand || ''}, Rumini`,
+      keywords: `${product.title}, 香水, フレグランス, ${product.brand || ''}, Rumini`,
       openGraph: {
         title,
         description,

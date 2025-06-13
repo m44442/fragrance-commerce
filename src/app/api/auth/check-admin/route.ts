@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Admin check failed:', error);
     return NextResponse.json(
-      { error: 'Admin check failed', details: error.message },
+      { error: 'Admin check failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
