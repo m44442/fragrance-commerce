@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next';
-import { getAllProducts } from '@/lib/microcms/client';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://rumini.jp';
@@ -62,10 +61,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 動的ページ（商品）- 本番環境では一時的に無効化
+  // 動的ページ（商品）- MicroCMS環境変数が利用可能な場合のみ
   let productPages: MetadataRoute.Sitemap = [];
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.MICROCMS_SERVICE_DOMAIN && process.env.MICROCMS_API_KEY) {
     try {
+      const { getAllProducts } = await import('@/lib/microcms/client');
       const { contents: products } = await getAllProducts();
       productPages = products.map((product) => ({
         url: `${baseUrl}/products/${product.id}`,
