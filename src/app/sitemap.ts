@@ -62,18 +62,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 動的ページ（商品）
+  // 動的ページ（商品）- 本番環境では一時的に無効化
   let productPages: MetadataRoute.Sitemap = [];
-  try {
-    const { contents: products } = await getAllProducts();
-    productPages = products.map((product) => ({
-      url: `${baseUrl}/products/${product.id}`,
-      lastModified: new Date(product.updatedAt || product.createdAt),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }));
-  } catch (error) {
-    console.error('Error fetching products for sitemap:', error);
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const { contents: products } = await getAllProducts();
+      productPages = products.map((product) => ({
+        url: `${baseUrl}/products/${product.id}`,
+        lastModified: new Date(product.updatedAt || product.createdAt),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }));
+    } catch (error) {
+      console.error('Error fetching products for sitemap:', error);
+    }
   }
 
   // カテゴリページ（仮の実装）
