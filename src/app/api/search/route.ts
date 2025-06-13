@@ -36,6 +36,16 @@ export async function GET(request: NextRequest) {
     
     const filterQuery = filters.length > 0 ? filters.join(' [and] ') : '';
     
+    // クライアントが利用できない場合のフォールバック
+    if (!client) {
+      return NextResponse.json({ 
+        contents: [], 
+        totalCount: 0, 
+        offset: 0, 
+        limit: 100 
+      });
+    }
+    
     // MicroCMSへのリクエスト
     // qパラメータによる曖昧検索を使用
     const response = await client.getList({

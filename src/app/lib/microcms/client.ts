@@ -32,7 +32,8 @@ const buildQuery = (baseQuery: Record<string, any>, additionalQuery?: Record<str
 // 基本のリスト取得関数
 export const getProductList = async (query?: Record<string, any>) => {
   if (!client) {
-    throw new Error('MicroCMS client not available');
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return { contents: [], totalCount: 0, offset: 0, limit: 20 };
   }
   return await (client as any).getList({
     endpoint: "rumini",
@@ -46,6 +47,10 @@ export const getAllProducts = async (additionalQuery?: Record<string, any>) => {
 };
 
 export const getDetailProduct = async (contentId: string) => {
+  if (!client) {
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return null;
+  }
   return await (client as any).getListDetail({
     endpoint: "rumini",
     contentId,
@@ -109,6 +114,11 @@ export const getCelebrityFragrances = async () => {
 
 // 商品をブランドごとにグループ化
 export const getProductsByBrand = async () => {
+  if (!client) {
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return [];
+  }
+  
   const result = await (client as any).getList({
     endpoint: "rumini",
     queries: {
@@ -171,6 +181,11 @@ export const getCelebrityPicks = async () => {
 };
 
 export const getUniqueThemes = async () => {
+  if (!client) {
+    // デプロイ時やクライアントが利用できない場合のフォールバック
+    return { contents: [] };
+  }
+  
   // 全商品を取得
   const allProducts = await (client as any).getList({
     endpoint: "rumini",

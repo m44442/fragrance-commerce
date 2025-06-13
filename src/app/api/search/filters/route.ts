@@ -4,6 +4,11 @@ import { client } from "@/lib/microcms/client";
 
 export async function GET() {
   try {
+    // クライアントが利用できない場合のフォールバック
+    if (!client) {
+      return NextResponse.json({ categories: [], brands: [] });
+    }
+    
     // すべての商品を取得
     const response = await client.getList({
       endpoint: 'rumini',

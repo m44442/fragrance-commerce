@@ -23,6 +23,9 @@ export async function GET(
     // まずMicroCMSから商品を取得
     let microCmsProduct;
     try {
+      if (!client) {
+        throw new Error('MicroCMS client not available');
+      }
       microCmsProduct = await client.getListDetail({
         endpoint: 'rumini',
         contentId: productId,
