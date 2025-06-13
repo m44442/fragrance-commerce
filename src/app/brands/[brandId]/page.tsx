@@ -32,13 +32,13 @@ export default function BrandPage() {
       const decodedBrand = decodeURIComponent(brandId);
       
       // ブランドの商品をフィルタリング
-      const brandProducts = contents.filter(product => 
+      const brandProducts = contents.filter((product: any) => 
         product.brand?.toLowerCase() === decodedBrand.toLowerCase() ||
         product.brand?.toLowerCase().includes(decodedBrand.toLowerCase())
       );
 
       if (brandProducts.length > 0) {
-        const prices = brandProducts.map(p => p.price);
+        const prices = brandProducts.map((p: any) => p.price);
         const brandName = brandProducts[0].brand;
         
         setBrandInfo({

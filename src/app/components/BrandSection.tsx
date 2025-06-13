@@ -23,7 +23,7 @@ const BrandSection = () => {
     const fetchBrands = async () => {
       try {
         const result = await getFeaturedBrands();
-        setBrands(result.contents || []);
+        setBrands((result.contents as any) || []);
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch brands:", error);

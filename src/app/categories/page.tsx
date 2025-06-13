@@ -28,27 +28,27 @@ const CategoriesPage = () => {
         // categoriesエンドポイントが存在しないため、直接フォールバックデータを使用
         // 商品データから実際のカテゴリを抽出
         const products = await getAllProducts();
-        const allCategories = products.contents.flatMap(p => p.category || []);
+        const allCategories = products.contents.flatMap((p: any) => p.category || []);
         const uniqueCategories = Array.from(new Set(allCategories));
 
         // 香りの系統カテゴリ（フローラル、シトラス等）
         const scentCategories = uniqueCategories
-          .filter(cat => cat.includes('(') && cat.includes(')'))
-          .map((cat, index) => ({
+          .filter((cat: any) => cat.includes('(') && cat.includes(')'))
+          .map((cat: any, index: number) => ({
             id: `scent-${index}`,
             name: cat,
             description: `${cat.split('(')[0]}系の香り`,
-            count: products.contents.filter(p => p.category?.includes(cat)).length
+            count: products.contents.filter((p: any) => p.category?.includes(cat)).length
           }));
 
         // シーン別カテゴリ（デイリーユース等）
         const sceneCategories = uniqueCategories
-          .filter(cat => cat.includes('daily') || cat.includes('デイリー') || cat.includes('ユース'))
-          .map((cat, index) => ({
+          .filter((cat: any) => cat.includes('daily') || cat.includes('デイリー') || cat.includes('ユース'))
+          .map((cat: any, index: number) => ({
             id: `scene-${index}`,
             name: cat,
             description: `${cat}に最適な香り`,
-            count: products.contents.filter(p => p.category?.includes(cat)).length
+            count: products.contents.filter((p: any) => p.category?.includes(cat)).length
           }));
 
         setScentCategories(scentCategories);

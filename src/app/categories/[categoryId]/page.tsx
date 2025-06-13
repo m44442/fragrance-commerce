@@ -101,7 +101,7 @@ const fetchCategoryData = async () => {
     if (categoryProducts.length === 0) {
       try {
         const allProducts = await getAllProducts();
-        categoryProducts = allProducts.contents.filter(product => {
+        categoryProducts = allProducts.contents.filter((product: any) => {
           const categoryName = category.name.toLowerCase();
           const productDesc = (product.description || '').toLowerCase();
           const productTitle = (product.title || '').toLowerCase();

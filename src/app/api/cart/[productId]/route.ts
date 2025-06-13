@@ -91,7 +91,7 @@ export async function POST(
       try {
         const { getAllProducts } = await import('@/lib/microcms/client');
         const { contents } = await getAllProducts();
-        const microCmsProduct = contents.find(p => p.id === productId);
+        const microCmsProduct = contents.find((p: any) => p.id === productId);
         
         console.log('MicroCMS products count:', contents.length);
         console.log('Found MicroCMS product:', !!microCmsProduct);

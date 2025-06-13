@@ -18,14 +18,14 @@ export async function GET() {
     // カテゴリの一覧を抽出
     const categories = Array.from(new Set(
       products
-        .map(product => product.category)
+        .map((product: any) => product.category)
         .filter(Boolean)
     )).sort();
     
     // ブランドの一覧を抽出
     const brands = Array.from(new Set(
       products
-        .map(product => product.brand)
+        .map((product: any) => product.brand)
         .filter(Boolean)
     )).sort();
     
