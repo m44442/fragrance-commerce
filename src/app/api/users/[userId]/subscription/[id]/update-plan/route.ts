@@ -5,7 +5,12 @@ import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 // Stripeの料金ID
 const STRIPE_PRICE_IDS = {
@@ -65,6 +70,7 @@ export async function POST(
     
     // Stripeのサブスクリプションを更新
     if (subscription.stripeSubscriptionId) {
+      const stripe = getStripe();
       await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
         items: [
           {

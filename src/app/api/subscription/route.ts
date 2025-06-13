@@ -5,7 +5,12 @@ import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 // プラン料金の定義
 const PLAN_PRICES = {
@@ -84,6 +89,7 @@ export async function POST(request: Request) {
     let stripeCustomerId = user.stripeCustomerId;
     
     if (!stripeCustomerId) {
+      const stripe = getStripe();
       const customer = await stripe.customers.create({
         email: user.email || undefined,
         name: user.name || undefined,
@@ -113,6 +119,7 @@ export async function POST(request: Request) {
     }
     
     // Stripeサブスクリプションを作成
+    const stripe = getStripe();
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: priceId }],

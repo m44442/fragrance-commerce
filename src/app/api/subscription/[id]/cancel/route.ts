@@ -7,7 +7,12 @@ import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 export async function POST(
   request: NextRequest,
@@ -42,6 +47,7 @@ export async function POST(
     // Stripeでの処理（もしStripeのサブスクリプションIDがある場合）
     if (subscription.stripeSubscriptionId) {
       try {
+        const stripe = getStripe();
         await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
       } catch (stripeError: any) {
         // Stripeでサブスクリプションが見つからない場合は警告のみ出力

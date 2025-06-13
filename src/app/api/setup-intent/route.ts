@@ -5,7 +5,12 @@ import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +45,7 @@ export async function POST(request: NextRequest) {
         customerData.name = user.name;
       }
       
+      const stripe = getStripe();
       const customer = await stripe.customers.create(customerData);
       
       stripeCustomerId = customer.id;
@@ -52,6 +58,7 @@ export async function POST(request: NextRequest) {
     }
     
     // SetupIntent作成
+    const stripe = getStripe();
     const setupIntent = await stripe.setupIntents.create({
       customer: stripeCustomerId,
       payment_method_types: ['card'],

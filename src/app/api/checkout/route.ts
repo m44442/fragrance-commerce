@@ -5,7 +5,12 @@ import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +34,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       }
 
+      const stripe = getStripe();
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'jpy',
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
         cartItems = cart.items;
       }
 
+      const stripe = getStripe();
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'jpy',

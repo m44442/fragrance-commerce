@@ -5,7 +5,12 @@ import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 // 支払い方法一覧の取得
 export async function GET(
@@ -32,6 +37,7 @@ export async function GET(
     }
     
     // Stripeから支払い方法を取得
+    const stripe = getStripe();
     const paymentMethods = await stripe.paymentMethods.list({
       customer: user.stripeCustomerId,
       type: 'card',
@@ -71,6 +77,7 @@ export async function POST(
     }
     
     // 支払い方法をアタッチ
+    const stripe = getStripe();
     await stripe.paymentMethods.attach(paymentMethodId, {
       customer: user.stripeCustomerId,
     });
@@ -105,6 +112,7 @@ export async function DELETE(
     
     const { paymentMethodId } = await request.json();
     
+    const stripe = getStripe();
     await stripe.paymentMethods.detach(paymentMethodId);
     
     return NextResponse.json({ success: true });
