@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             url: imageUrl,
             width: 800,
             height: 600,
-            alt: product.name,
+            alt: product.title,
           },
         ],
         locale: 'ja_JP',

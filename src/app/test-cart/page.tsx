@@ -34,7 +34,7 @@ export default function TestCartPage() {
     } catch (error) {
       console.error('Error:', error);
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export default function TestCartPage() {
     } catch (error) {
       console.error('Error:', error);
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export default function TestCartPage() {
     } catch (error) {
       console.error('Error:', error);
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function TestCartPage() {
     } catch (error) {
       console.error('Error:', error);
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -138,7 +138,7 @@ export default function TestCartPage() {
     } catch (error) {
       console.error('Error:', error);
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);

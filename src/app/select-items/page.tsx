@@ -21,8 +21,8 @@ const SelectItemsPage = () => {
         const selectItems = contents.filter(product => 
           product.category || 
           product.themes || 
-          product.isRecommended ||
-          product.averageRating >= 4.0
+          product.isFeatured ||
+          (product.averageRating && product.averageRating >= 4.0)
         );
         setProducts(selectItems);
         setIsLoading(false);
