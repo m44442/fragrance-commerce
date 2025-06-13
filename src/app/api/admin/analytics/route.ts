@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { nextAuthOptions } from '@/lib/next-auth/options';
+import { authOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(nextAuthOptions);
-    
+    const session = await getServerSession(authOptions);
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { message: '認証が必要です' },
