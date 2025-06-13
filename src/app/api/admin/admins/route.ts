@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/next-auth/options';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
+export const dynamic = 'force-dynamic';
+
 // 管理者一覧取得
 export async function GET(request: NextRequest) {
   try {
