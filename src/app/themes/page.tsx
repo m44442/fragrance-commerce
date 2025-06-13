@@ -71,9 +71,9 @@ export default function ThemesPage() {
       };
 
       // 商品をテーマごとに分類
-      contents.forEach((product) => {
+      contents.forEach((product: any) => {
         if (product.themes && product.themes.length > 0) {
-          product.themes.forEach((theme) => {
+          product.themes.forEach((theme: any) => {
             const themeKey = theme.split(" ")[0]; // "popular (人気ランキング)" -> "popular"
             if (themeGroups[themeKey]) {
               themeGroups[themeKey].products.push(product);
@@ -96,15 +96,15 @@ export default function ThemesPage() {
       themeGroups.unisex.products = contents.slice(0, 8);
       
       // シーズナル（フローラル系など季節感のある香水）
-      themeGroups.seasonal.products = contents.filter(product => {
+      themeGroups.seasonal.products = contents.filter((product: any) => {
         if (!product.category) return false;
         const categories = Array.isArray(product.category) ? product.category : [product.category];
-        return categories.some(cat => 
+        return categories.some((cat: any) => 
           cat.includes("floral") || cat.includes("citrus") || cat.includes("fresh")
         );
       }).slice(0, 8);
 
-      const themesArray = Object.values(themeGroups).filter(theme => theme.products.length > 0);
+      const themesArray = Object.values(themeGroups).filter((theme: any) => theme.products.length > 0);
       setThemes(themesArray);
     } catch (error) {
       console.error("Error fetching themes:", error);

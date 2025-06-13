@@ -36,7 +36,7 @@ const NewArrivalsPage = () => {
         const result = await getNewArrivals();
         
         // 日付順に並べ替え
-        const sortedProducts = (result.contents || []).sort((a, b) => {
+        const sortedProducts = (result.contents || []).sort((a: any, b: any) => {
           const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
           const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
           return dateB - dateA; // 降順（新しい順）

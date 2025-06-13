@@ -60,7 +60,7 @@ const RankingsPage = () => {
           case 'popular':
             // 人気ランキング - 全商品をレビュー数順でソート（フィルタリングなし）
             fetchedProducts = fetchedProducts
-              .sort((a, b) => {
+              .sort((a: any, b: any) => {
                 // まずrankがあるものを優先
                 if (a.rank && b.rank) return a.rank - b.rank;
                 if (a.rank && !b.rank) return -1;
@@ -72,23 +72,23 @@ const RankingsPage = () => {
           case 'new-trend':
             // 新着トレンド - 公開日順
             fetchedProducts = fetchedProducts
-              .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+              .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
             break;
           case 'best-value':
             // コスパ最強 - 価格が安い順（フィルタリングを緩く）
             fetchedProducts = fetchedProducts
-              .filter(product => product.price && product.price < 8000) // 条件を緩く
-              .sort((a, b) => (a.price || 0) - (b.price || 0));
+              .filter((product: any) => product.price && product.price < 8000) // 条件を緩く
+              .sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
             break;
           case 'gift':
             // ギフト向け - 評価順（フィルタリングを緩く）
             fetchedProducts = fetchedProducts
-              .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+              .sort((a: any, b: any) => (b.averageRating || 0) - (a.averageRating || 0));
             break;
           case 'office':
             // オフィス向け - まずはすべて表示してソート
             fetchedProducts = fetchedProducts
-              .sort((a, b) => {
+              .sort((a: any, b: any) => {
                 // オフィス関連のキーワードがあるものを優先
                 const aOffice = (a.category?.includes('オフィス') || a.title?.includes('ライト') || a.concentration === 'EDT') ? 1 : 0;
                 const bOffice = (b.category?.includes('オフィス') || b.title?.includes('ライト') || b.concentration === 'EDT') ? 1 : 0;
@@ -98,7 +98,7 @@ const RankingsPage = () => {
           case 'date':
             // デート向け - まずはすべて表示してソート
             fetchedProducts = fetchedProducts
-              .sort((a, b) => {
+              .sort((a: any, b: any) => {
                 const aDate = (a.category?.includes('デート') || a.title?.includes('セクシー') || a.concentration === 'EDP') ? 1 : 0;
                 const bDate = (b.category?.includes('デート') || b.title?.includes('セクシー') || b.concentration === 'EDP') ? 1 : 0;
                 return bDate - aDate;
@@ -107,12 +107,12 @@ const RankingsPage = () => {
           case 'seasonal':
             // 季節のおすすめ - まずはすべて表示
             fetchedProducts = fetchedProducts
-              .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+              .sort((a: any, b: any) => (b.averageRating || 0) - (a.averageRating || 0));
             break;
           default:
             // デフォルトは人気ランキング
             fetchedProducts = fetchedProducts
-              .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+              .sort((a: any, b: any) => (b.reviewCount || 0) - (a.reviewCount || 0));
         }
         
         console.log('フィルタリング後の商品数:', fetchedProducts.length);

@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
       const { getAllProducts } = await import('@/lib/microcms/client');
       const { contents: products } = await getAllProducts();
-      productPages = products.map((product) => ({
+      productPages = products.map((product: any) => ({
         url: `${baseUrl}/products/${product.id}`,
         lastModified: new Date(product.updatedAt || product.createdAt),
         changeFrequency: 'weekly' as const,

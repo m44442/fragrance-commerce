@@ -18,7 +18,7 @@ const SelectItemsPage = () => {
       try {
         const { contents } = await getAllProducts();
         // セレクトアイテムらしい商品をフィルタリング
-        const selectItems = contents.filter(product => 
+        const selectItems = contents.filter((product: any) => 
           product.category || 
           product.themes || 
           product.isFeatured ||

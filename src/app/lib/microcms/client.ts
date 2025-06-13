@@ -1,5 +1,4 @@
 // src/app/lib/microcms/client.ts
-// @ts-nocheck
 import { productType } from "@/types/types";
 import { createClient } from "microcms-js-sdk";
 
@@ -198,7 +197,7 @@ export const getUniqueThemes = async () => {
             if (themeId === 'seasonal') return '季節のおすすめ';
             return themeId
               .split('-')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
               .join(' ');
           })();
           

@@ -95,7 +95,7 @@ const ThemeDetailPage = () => {
           try {
             const allProducts = await getAllProducts();
             // 関連性のありそうな商品をフィルタリング
-            const filteredProducts = allProducts.contents.filter(product => {
+            const filteredProducts = allProducts.contents.filter((product: any) => {
               // テーマ名と商品説明などからマッチするものを探す
               const themeLower = themeInfo.name.toLowerCase();
               const descLower = (product.description || '').toLowerCase();
@@ -148,7 +148,7 @@ const ThemeDetailPage = () => {
         
         // すべての商品からユニークなテーマIDを抽出
         const uniqueThemes = new Set<string>();
-        allThemesQuery.contents.forEach(product => {
+        allThemesQuery.contents.forEach((product: any) => {
           if (product.themes && Array.isArray(product.themes)) {
             product.themes.forEach((theme : any) => {
               if (theme !== themeId) {
