@@ -21,6 +21,8 @@
 import { authOptions } from "@/lib/next-auth/options";
 import NextAuth from "next-auth";
 
+export const dynamic = 'force-dynamic';
+
 // NextAuthハンドラーの初期化
 // このハンドラーはGETとPOSTの両方のHTTPメソッドをサポート
 const handler = NextAuth(authOptions);

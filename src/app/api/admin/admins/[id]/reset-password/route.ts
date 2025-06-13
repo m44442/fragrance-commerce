@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/next-auth/options';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
+export const dynamic = 'force-dynamic';
+
 // 管理者パスワードリセット
 export async function POST(
   request: NextRequest,

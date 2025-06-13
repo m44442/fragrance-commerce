@@ -5,6 +5,8 @@ import { nextAuthOptions } from "@/lib/next-auth/options";
 import prisma from "@/lib/prisma";
 import { resolveProductId } from "@/lib/product-helpers";
 
+export const dynamic = 'force-dynamic';
+
 // レビュー一覧を取得
 export async function GET(
   request: NextRequest,

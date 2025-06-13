@@ -4,6 +4,8 @@ import { client } from "@/lib/microcms/client";
 import { syncProductToDatabase } from "@/lib/sync-utils";
 import prisma from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }

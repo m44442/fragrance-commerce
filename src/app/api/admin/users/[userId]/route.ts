@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { nextAuthOptions } from "@/lib/next-auth/options"; // インポート名を修正
 import prisma from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ userId: string }> } // Promiseに変更
