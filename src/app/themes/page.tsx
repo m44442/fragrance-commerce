@@ -96,11 +96,13 @@ export default function ThemesPage() {
       themeGroups.unisex.products = contents.slice(0, 8);
       
       // シーズナル（フローラル系など季節感のある香水）
-      themeGroups.seasonal.products = contents.filter(product => 
-        product.category?.some(cat => 
+      themeGroups.seasonal.products = contents.filter(product => {
+        if (!product.category) return false;
+        const categories = Array.isArray(product.category) ? product.category : [product.category];
+        return categories.some(cat => 
           cat.includes("floral") || cat.includes("citrus") || cat.includes("fresh")
-        )
-      ).slice(0, 8);
+        );
+      }).slice(0, 8);
 
       const themesArray = Object.values(themeGroups).filter(theme => theme.products.length > 0);
       setThemes(themesArray);
