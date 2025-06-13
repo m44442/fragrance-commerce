@@ -19,8 +19,8 @@ export default function BottomNavigation() {
   const { data: session } = useSession();
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 bg-white border border-gray-200 z-50 shadow-lg rounded-xl">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-4">
+    <nav className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:w-96 bg-white border border-gray-200 z-50 shadow-lg rounded-xl">
+      <div className="flex items-center justify-around h-16 px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const needsAuth = item.href === "/favorites" || item.href === "/profile";
