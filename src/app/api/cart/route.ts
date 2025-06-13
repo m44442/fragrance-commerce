@@ -1,13 +1,13 @@
 // src/app/api/cart/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { nextAuthOptions } from '@/lib/next-auth/options';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/next-auth/options';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   try {
     // 認証チェック
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

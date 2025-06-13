@@ -67,14 +67,46 @@ export default function AnalyticsPage() {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/analytics?dateRange=${dateRange}`);
+      // ダミーデータを返す（開発中のため）
+      const dummyData: AnalyticsData = {
+        salesOverTime: [
+          { date: '2025-06-07', amount: 50000, orders: 5 },
+          { date: '2025-06-08', amount: 75000, orders: 8 },
+          { date: '2025-06-09', amount: 60000, orders: 6 },
+          { date: '2025-06-10', amount: 90000, orders: 9 },
+          { date: '2025-06-11', amount: 85000, orders: 7 },
+          { date: '2025-06-12', amount: 70000, orders: 8 },
+          { date: '2025-06-13', amount: 95000, orders: 10 }
+        ],
+        topProducts: [
+          { id: '1', name: 'シャネル No.5', sales: 25, revenue: 125000 },
+          { id: '2', name: 'ディオール サヴァージュ', sales: 20, revenue: 100000 },
+          { id: '3', name: 'トム フォード ブラック オーキッド', sales: 15, revenue: 90000 }
+        ],
+        userGrowth: [
+          { date: '2025-06-07', users: 100, newUsers: 5 },
+          { date: '2025-06-08', users: 105, newUsers: 8 },
+          { date: '2025-06-09', users: 113, newUsers: 6 },
+          { date: '2025-06-10', users: 119, newUsers: 9 },
+          { date: '2025-06-11', users: 128, newUsers: 7 },
+          { date: '2025-06-12', users: 135, newUsers: 8 },
+          { date: '2025-06-13', users: 143, newUsers: 10 }
+        ],
+        conversionMetrics: {
+          totalVisitors: 1000,
+          totalUsers: 143,
+          totalOrders: 53,
+          conversionRate: 5.3,
+          averageOrderValue: 8500
+        },
+        revenueByCategory: [
+          { category: 'レディース', revenue: 300000, percentage: 60 },
+          { category: 'メンズ', revenue: 150000, percentage: 30 },
+          { category: 'ユニセックス', revenue: 50000, percentage: 10 }
+        ]
+      };
       
-      if (response.ok) {
-        const analyticsData = await response.json();
-        setData(analyticsData);
-      } else {
-        setError('分析データの取得に失敗しました');
-      }
+      setData(dummyData);
     } catch (error) {
       console.error('Failed to fetch analytics data:', error);
       setError('分析データの取得中にエラーが発生しました');
@@ -84,26 +116,7 @@ export default function AnalyticsPage() {
   };
 
   const exportData = async () => {
-    try {
-      const response = await fetch(`/api/admin/analytics/export?dateRange=${dateRange}`);
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `analytics-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('エクスポートに失敗しました');
-      }
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('エクスポート中にエラーが発生しました');
-    }
+    alert('エクスポート機能は開発中です');
   };
 
   if (loading) {
@@ -251,7 +264,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="h-64 flex items-end justify-between space-x-2">
                   {data.salesOverTime.slice(-7).map((item, index) => (
-                    <div key={index} className="flex flex-col items-center">
+                    <div key={`sales-${item.date}-${index}`} className="flex flex-col items-center">
                       <div
                         className="bg-indigo-600 w-8 rounded-t"
                         style={{
@@ -277,7 +290,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="space-y-3">
                   {data.revenueByCategory.map((category, index) => (
-                    <div key={index} className="flex items-center justify-between">
+                    <div key={`category-${category.category}-${index}`} className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div
                           className="w-4 h-4 rounded mr-3"
@@ -321,7 +334,7 @@ export default function AnalyticsPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {data.topProducts.map((product, index) => (
-                      <tr key={product.id}>
+                      <tr key={`product-${product.id}-${index}`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -354,7 +367,7 @@ export default function AnalyticsPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">ユーザー成長</h3>
               <div className="h-64 flex items-end justify-between space-x-2">
                 {data.userGrowth.slice(-7).map((item, index) => (
-                  <div key={index} className="flex flex-col items-center">
+                  <div key={`user-growth-${item.date}-${index}`} className="flex flex-col items-center">
                     <div className="flex flex-col">
                       <div
                         className="bg-green-600 w-8 rounded-t"

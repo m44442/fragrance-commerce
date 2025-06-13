@@ -3,15 +3,20 @@ import { randomBytes } from 'crypto';
 import prisma from '@/lib/prisma';
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransporter({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// 開発環境ではnodemailerを使わないため、本番環境でのみ初期化
+let transporter: any = null;
+
+if (process.env.NODE_ENV !== 'development') {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,37 +64,48 @@ export async function POST(request: NextRequest) {
     // リセット用URLを生成
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-    // メール送信
-    const mailOptions = {
-      from: process.env.SMTP_FROM || 'noreply@fragrance.com',
-      to: email,
-      subject: '【香水ECサイト】パスワードリセットのご案内',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">パスワードリセット</h2>
-          <p>こんにちは、${user.name}様</p>
-          <p>パスワードリセットのリクエストを受け付けました。</p>
-          <p>下記のリンクをクリックして、新しいパスワードを設定してください：</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" 
-               style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              パスワードをリセット
-            </a>
+    // 開発環境では実際のメール送信をスキップ
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== パスワードリセット（開発環境）===');
+      console.log(`Email: ${email}`);
+      console.log(`Token: ${token}`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log('=====================================');
+    } else {
+      // 本番環境でのメール送信
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'noreply@fragrance.com',
+        to: email,
+        subject: '【香水ECサイト】パスワードリセットのご案内',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">パスワードリセット</h2>
+            <p>こんにちは、${user.name}様</p>
+            <p>パスワードリセットのリクエストを受け付けました。</p>
+            <p>下記のリンクをクリックして、新しいパスワードを設定してください：</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                 style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                パスワードをリセット
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              このリンクは1時間で有効期限が切れます。<br>
+              もしリンクが機能しない場合は、以下のURLを直接ブラウザにコピーしてください：<br>
+              <span style="word-break: break-all;">${resetUrl}</span>
+            </p>
+            <p style="color: #666; font-size: 14px;">
+              このリクエストに心当たりがない場合は、このメールを無視してください。
+              パスワードは変更されません。
+            </p>
           </div>
-          <p style="color: #666; font-size: 14px;">
-            このリンクは1時間で有効期限が切れます。<br>
-            もしリンクが機能しない場合は、以下のURLを直接ブラウザにコピーしてください：<br>
-            <span style="word-break: break-all;">${resetUrl}</span>
-          </p>
-          <p style="color: #666; font-size: 14px;">
-            このリクエストに心当たりがない場合は、このメールを無視してください。
-            パスワードは変更されません。
-          </p>
-        </div>
-      `,
-    };
+        `,
+      };
 
-    await transporter.sendMail(mailOptions);
+      if (transporter) {
+        await transporter.sendMail(mailOptions);
+      }
+    }
 
     return NextResponse.json(
       { message: 'パスワードリセット用のメールを送信しました（該当するアカウントがある場合）' },

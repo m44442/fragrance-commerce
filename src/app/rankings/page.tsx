@@ -43,75 +43,81 @@ const RankingsPage = () => {
       try {
         setIsLoading(true);
         
-        // 選択されたランキングタイプに基づいてクエリを決定
-        let filters = '';
-        let orders = '';
-        
-        switch (selectedType) {
-          case 'popular':
-            // 人気ランキング - レビュー数や評価が高い商品
-            filters = 'rank[greater_than]0';
-            orders = 'rank';
-            break;
-          case 'new-trend':
-            // 新着トレンド - 新商品フラグがあるもの
-            filters = 'isNew[equals]true';
-            orders = '-publishedAt';
-            break;
-          case 'best-value':
-            // コスパ最強 - 価格が手頃なもの
-            filters = 'price[less_than]5000';
-            orders = 'price';
-            break;
-          case 'gift':
-            // ギフト向け - themes配列にgiftが含まれるもの
-            filters = 'themes[contains]gift';
-            break;
-          case 'office':
-            // オフィス向け - scenes配列かthemes配列にofficeが含まれるもの
-            filters = 'themes[contains]office,scenes[contains]office';
-            break;
-          case 'date':
-            // デート向け - scenes配列かthemes配列にdateが含まれるもの
-            filters = 'themes[contains]date,scenes[contains]date';
-            break;
-          case 'seasonal':
-            // 季節のおすすめ - 現在の季節に合うもの
-            const currentMonth = new Date().getMonth() + 1;
-            let seasonFilter = '';
-            if (currentMonth >= 3 && currentMonth <= 5) {
-              // 春 (3-5月)
-              seasonFilter = 'scenes[contains]season-spring';
-            } else if (currentMonth >= 6 && currentMonth <= 8) {
-              // 夏 (6-8月)
-              seasonFilter = 'scenes[contains]season-summer';
-            } else if (currentMonth >= 9 && currentMonth <= 11) {
-              // 秋 (9-11月)
-              seasonFilter = 'scenes[contains]season-autumn';
-            } else {
-              // 冬 (12-2月)
-              seasonFilter = 'scenes[contains]season-winter';
-            }
-            filters = seasonFilter;
-            break;
-          default:
-            // デフォルトは人気ランキング
-            filters = 'rank[greater_than]0';
-            orders = 'rank';
-        }
-        
-        // MicroCMSから商品を取得
+        // シンプルに全商品を取得してクライアントサイドでソート・フィルタリング
         const result = await client.getList({
           endpoint: 'rumini',
           queries: {
-            filters,
-            orders: orders || '-reviewCount', // デフォルトはレビュー数の降順
-            limit: 50 // 十分な数を取得して後でフィルタリング
+            limit: 100 // 十分な数を取得
           }
         });
         
-        // 取得した商品を保存
-        const fetchedProducts = result.contents || [];
+        let fetchedProducts = result.contents || [];
+        console.log('取得した商品数:', fetchedProducts.length);
+        console.log('選択されたタイプ:', selectedType);
+        
+        // 選択されたランキングタイプに基づいてクライアントサイドでフィルタリング・ソート
+        switch (selectedType) {
+          case 'popular':
+            // 人気ランキング - 全商品をレビュー数順でソート（フィルタリングなし）
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => {
+                // まずrankがあるものを優先
+                if (a.rank && b.rank) return a.rank - b.rank;
+                if (a.rank && !b.rank) return -1;
+                if (!a.rank && b.rank) return 1;
+                // rankがない場合はレビュー数順
+                return (b.reviewCount || 0) - (a.reviewCount || 0);
+              });
+            break;
+          case 'new-trend':
+            // 新着トレンド - 公開日順
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+            break;
+          case 'best-value':
+            // コスパ最強 - 価格が安い順（フィルタリングを緩く）
+            fetchedProducts = fetchedProducts
+              .filter(product => product.price && product.price < 8000) // 条件を緩く
+              .sort((a, b) => (a.price || 0) - (b.price || 0));
+            break;
+          case 'gift':
+            // ギフト向け - 評価順（フィルタリングを緩く）
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+            break;
+          case 'office':
+            // オフィス向け - まずはすべて表示してソート
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => {
+                // オフィス関連のキーワードがあるものを優先
+                const aOffice = (a.category?.includes('オフィス') || a.title?.includes('ライト') || a.concentration === 'EDT') ? 1 : 0;
+                const bOffice = (b.category?.includes('オフィス') || b.title?.includes('ライト') || b.concentration === 'EDT') ? 1 : 0;
+                return bOffice - aOffice;
+              });
+            break;
+          case 'date':
+            // デート向け - まずはすべて表示してソート
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => {
+                const aDate = (a.category?.includes('デート') || a.title?.includes('セクシー') || a.concentration === 'EDP') ? 1 : 0;
+                const bDate = (b.category?.includes('デート') || b.title?.includes('セクシー') || b.concentration === 'EDP') ? 1 : 0;
+                return bDate - aDate;
+              });
+            break;
+          case 'seasonal':
+            // 季節のおすすめ - まずはすべて表示
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+            break;
+          default:
+            // デフォルトは人気ランキング
+            fetchedProducts = fetchedProducts
+              .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+        }
+        
+        console.log('フィルタリング後の商品数:', fetchedProducts.length);
+        
+        // フィルタリング・ソート済みの商品を保存
         setProducts(fetchedProducts);
         
         // 初期フィルタリングを適用

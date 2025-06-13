@@ -59,11 +59,19 @@ export default function AdminDashboard() {
 
   const checkAdminAccess = async () => {
     try {
+      console.log('Checking admin access...');
       const response = await fetch('/api/auth/check-admin');
-      if (!response.ok) {
+      const data = await response.json();
+      
+      console.log('Admin check response:', data);
+      
+      if (!response.ok || !data.isAdmin) {
+        console.log('Admin access denied, redirecting to home');
         router.push('/');
         return;
       }
+      
+      console.log('Admin access granted');
       fetchDashboardData();
     } catch (error) {
       console.error('Admin access check failed:', error);
@@ -209,9 +217,17 @@ export default function AdminDashboard() {
               <Link href="/admin/orders" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 注文管理
               </Link>
+              <Link href="/admin/shipping" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                発送管理
+              </Link>
               <Link href="/admin/analytics" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 分析
               </Link>
+              {session?.user?.email === 'rikumatsumoto.2003@gmail.com' && (
+                <Link href="/admin/admins" className="border-transparent text-red-500 hover:text-red-700 hover:border-red-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                  管理者管理
+                </Link>
+              )}
             </nav>
           </div>
         </div>

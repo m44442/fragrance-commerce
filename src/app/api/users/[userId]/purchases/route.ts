@@ -10,11 +10,13 @@ export async function GET(
 ) {
   try {
     const { userId } = await params;
+    console.log('=== Fetching purchase history for userId:', userId);
     
     // 認証チェック
     const session = await getServerSession(nextAuthOptions);
     
     if (!session?.user?.id || session.user.id !== userId) {
+      console.log('Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -34,6 +36,8 @@ export async function GET(
         createdAt: 'desc',
       },
     });
+    
+    console.log('Found purchases:', purchases.length);
     
     // レスポンスデータの整形
     const formattedPurchases = purchases.map(purchase => ({

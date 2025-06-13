@@ -47,6 +47,7 @@ model User {
   city             String?
   address          String?
   role             String         @default("USER")
+  isAdmin          Boolean        @default(false)
   stripeCustomerId String?        @unique
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -56,8 +57,9 @@ model User {
   cart             Cart?
   purchases        Purchase[]
   subscriptions    Subscription[]
-  reviews       Review[]
-  reviewHelpful ReviewHelpful[]
+  reviews          Review[]
+  reviewHelpful    ReviewHelpful[]
+  orders           Order[]
 }
 
 model VerificationToken {
@@ -105,9 +107,10 @@ model Product {
   favorites         Favorite[]
   cartItems         CartItem[]
   purchases         Purchase[]
-  reviews       Review[]
-  averageRating Float?  @db.DoublePrecision
-  reviewCount   Int     @default(0)
+  reviews           Review[]
+  orderItems        OrderItem[]
+  averageRating     Float?     @db.DoublePrecision
+  reviewCount       Int        @default(0)
 }
 
 model Review {
@@ -237,4 +240,63 @@ model SubscriptionDelivery {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   subscription   Subscription   @relation(fields: [subscriptionId], references: [id])
+}
+
+enum ShippingStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  DELIVERED
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  orderNumber    String?        @unique
+  userId         String
+  total          Int            @default(0)
+  subtotal       Int            @default(0)
+  tax            Int            @default(0)
+  shippingFee    Int            @default(0)
+  shippingStatus ShippingStatus @default(PENDING)
+  paymentStatus  String         @default("PENDING")
+  paymentMethod  String?
+  stripePaymentIntentId String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  canceledAt     DateTime?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id])
+  orderItems     OrderItem[]
+  shippingAddress ShippingAddress?
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String?
+  productName String?
+  quantity  Int      @default(1)
+  price     Int      @default(0)
+  isSample  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id])
+}
+
+model ShippingAddress {
+  id         String  @id @default(cuid())
+  orderId    String  @unique
+  name       String
+  postalCode String
+  prefecture String
+  city       String
+  address1   String
+  address2   String?
+  phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  order      Order   @relation(fields: [orderId], references: [id])
 }

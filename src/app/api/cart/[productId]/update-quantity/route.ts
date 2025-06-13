@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { nextAuthOptions } from '@/lib/next-auth/options';
-import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/next-auth/options';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,6 +16,11 @@ export async function POST(
 
     const { productId } = await params;
     const { quantity } = await request.json();
+    
+    console.log('=== Updating cart quantity ===');
+    console.log('userId:', session.user.id);
+    console.log('productId:', productId);
+    console.log('quantity:', quantity);
 
     if (!quantity || quantity < 1) {
       return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 });

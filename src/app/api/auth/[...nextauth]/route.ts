@@ -18,12 +18,12 @@
  * GETリクエスト: セッション情報の取得やプロバイダーへのリダイレクト
  * POSTリクエスト: ログイン処理やコールバック処理など
  */
-import { nextAuthOptions } from "@/lib/next-auth/options";
+import { authOptions } from "@/lib/next-auth/options";
 import NextAuth from "next-auth";
 
 // NextAuthハンドラーの初期化
 // このハンドラーはGETとPOSTの両方のHTTPメソッドをサポート
-const handler = NextAuth(nextAuthOptions);
+const handler = NextAuth(authOptions);
 
 // API Routeとしてハンドラーをエクスポート
 export { handler as GET, handler as POST };

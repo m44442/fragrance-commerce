@@ -7,6 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: NextRequest) {
+  console.log('=== Stripe Webhook Received ===');
   const body = await request.text();
   const sig = request.headers.get('stripe-signature') as string;
   
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
   }
   
   try {
+    console.log('Event type:', event.type);
     switch (event.type) {
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
@@ -38,6 +40,7 @@ export async function POST(request: NextRequest) {
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       case 'payment_intent.succeeded':
+        console.log('Handling payment_intent.succeeded event');
         await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
         break;
       default:
@@ -179,21 +182,28 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
 // 単品決済成功時の処理
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  console.log('Payment intent succeeded:', paymentIntent.id);
+  console.log('=== Payment intent succeeded ===');
+  console.log('Payment Intent ID:', paymentIntent.id);
+  console.log('Metadata:', paymentIntent.metadata);
   
   const { userId, productId, type } = paymentIntent.metadata;
   
-  if (!userId) return;
+  if (!userId) {
+    console.log('No userId in metadata, skipping purchase record creation');
+    return;
+  }
   
   if (type === 'single_purchase' && productId) {
+    console.log('Processing single purchase for userId:', userId, 'productId:', productId);
     // 単品購入の場合、購入履歴を作成
     try {
-      await prisma.purchase.create({
+      const purchase = await prisma.purchase.create({
         data: {
           userId,
           fragranceId: productId,
         },
       });
+      console.log('Purchase record created successfully:', purchase.id);
       
       // カートから商品を削除（存在する場合）
       const cart = await prisma.cart.findUnique({
@@ -207,6 +217,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
             productId
           }
         });
+        console.log('Removed item from cart');
       }
     } catch (error) {
       console.error('Error creating purchase record:', error);

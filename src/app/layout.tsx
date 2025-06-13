@@ -108,12 +108,14 @@ export default function RootLayout({
         <link rel="canonical" href={process.env.NEXTAUTH_URL || "https://rumini.jp"} />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
       </head>
-      <body className={`${notoSansJP.className} min-h-screen bg-gray-50`}>
+      <body className={`${notoSansJP.className} min-h-screen bg-gray-50 antialiased`}>
         <NextAuthProvider>
-          <div className="w-full max-w-[790px] mx-auto bg-white min-h-screen relative">
+          <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="pb-20">
-              {children}
+            <main className="flex-1 pb-16">
+              <div className="w-full max-w-7xl mx-auto">
+                {children}
+              </div>
             </main>
             <BottomNavigation />
           </div>

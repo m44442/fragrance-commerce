@@ -35,11 +35,14 @@ const BrandSection = () => {
   }, []);
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-4 py-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">厳選！注目のブランド特集</h2>
-        <Link href="/brands" className="text-gray-500 text-sm">
-          もっと見る &gt;
+        <Link href="/brands" className="text-custom-peach text-sm font-medium hover:text-custom-peach-dark transition-colors flex items-center">
+          もっと見る
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       </div>
 
@@ -53,15 +56,15 @@ const BrandSection = () => {
             <Link 
               key={brand.id} 
               href={`/brands/${brand.id}`}
-              className="flex-shrink-0 w-60 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg overflow-hidden shadow-sm"
+              className="flex-shrink-0 w-60 bg-white rounded-lg overflow-hidden shadow"
             >
               <div className="h-32 bg-gray-200 relative">
                 {brand.imageUrl ? (
                   <Image 
                     src={brand.imageUrl} 
                     alt={brand.name} 
-                    layout="fill" 
-                    objectFit="cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -69,11 +72,11 @@ const BrandSection = () => {
                   </div>
                 )}
               </div>
-              <div className="p-3">
-                <h3 className="text-sm font-bold">{brand.name}</h3>
-                <p className="text-xs text-gray-600">{brand.nameJp}</p>
-                <div className="mt-2 bg-purple-200 rounded-full px-3 py-1">
-                  <p className="text-xs text-purple-800">{brand.tagline}</p>
+              <div className="p-4">
+                <h3 className="text-lg font-bold">{brand.name}</h3>
+                <p className="text-sm text-gray-600 mb-2">{brand.nameJp}</p>
+                <div className="bg-custom-peach bg-opacity-20 rounded-full px-3 py-1">
+                  <p className="text-sm text-custom-peach font-medium">{brand.tagline}</p>
                 </div>
               </div>
             </Link>

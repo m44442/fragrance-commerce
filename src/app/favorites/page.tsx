@@ -32,10 +32,19 @@ export default function FavoritesPage() {
 
   const fetchFavorites = async () => {
     try {
+      console.log("=== Fetching favorites ===");
+      console.log("User ID:", session?.user?.id);
+      
       const response = await fetch(`/api/users/${session?.user?.id}/favorites`);
+      console.log("Favorites API response status:", response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log("Favorites data:", data);
         setFavorites(data.favorites || []);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to fetch favorites:", errorData);
       }
     } catch (error) {
       console.error("Error fetching favorites:", error);

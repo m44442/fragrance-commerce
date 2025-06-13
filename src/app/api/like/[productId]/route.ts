@@ -1,7 +1,7 @@
 // src/app/api/like/[productId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/next-auth/options';
+import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
 export async function POST(
@@ -13,7 +13,7 @@ export async function POST(
     console.log("いいねAPI POST - 商品ID:", productId);
     
     // 認証チェック
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(nextAuthOptions);
     console.log("セッション情報:", {
       hasSession: !!session,
       userId: session?.user?.id,
@@ -25,8 +25,26 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // MicroCMS IDから内部Product IDを取得
+    let product = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { microCmsId: productId }
+        ]
+      }
+    });
+    
+    if (!product) {
+      console.log("Product not found for ID:", productId);
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    
+    const internalProductId = product.id;
+    console.log("Product ID mapping:", { input: productId, internal: internalProductId });
+
     const { liked } = await request.json();
-    console.log("いいね操作:", { liked, userId: session.user.id, productId });
+    console.log("いいね操作:", { liked, userId: session.user.id, productId, internalProductId });
     
     if (liked) {
       // お気に入りに追加
@@ -34,7 +52,7 @@ export async function POST(
         const result = await prisma.favorite.create({
           data: {
             userId: session.user.id,
-            productId: productId,
+            productId: internalProductId, // 内部Product IDを使用
           },
         });
         console.log("お気に入り追加成功:", result);
@@ -52,7 +70,7 @@ export async function POST(
       const deleteResult = await prisma.favorite.deleteMany({
         where: {
           userId: session.user.id,
-          productId: productId,
+          productId: internalProductId, // 内部Product IDを使用
         },
       });
       console.log("お気に入り削除結果:", deleteResult);
@@ -75,7 +93,7 @@ export async function GET(
     console.log("いいねAPI GET - 商品ID:", productId);
     
     // 認証チェック
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(nextAuthOptions);
     console.log("GETセッション情報:", {
       hasSession: !!session,
       userId: session?.user?.id,
@@ -87,11 +105,29 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // MicroCMS IDから内部Product IDを取得
+    let product = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { microCmsId: productId }
+        ]
+      }
+    });
+    
+    if (!product) {
+      console.log("GET Product not found for ID:", productId);
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    
+    const internalProductId = product.id;
+    console.log("GET Product ID mapping:", { input: productId, internal: internalProductId });
+    
     // お気に入り状態を確認
     const favorite = await prisma.favorite.findFirst({
       where: {
         userId: session.user.id,
-        productId: productId,
+        productId: internalProductId, // 内部Product IDを使用
       },
     });
     
@@ -121,11 +157,29 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // MicroCMS IDから内部Product IDを取得
+    let product = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { id: productId },
+          { microCmsId: productId }
+        ]
+      }
+    });
+    
+    if (!product) {
+      console.log("DELETE Product not found for ID:", productId);
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    
+    const internalProductId = product.id;
+    console.log("DELETE Product ID mapping:", { input: productId, internal: internalProductId });
+    
     // お気に入りから削除
     await prisma.favorite.deleteMany({
       where: {
         userId: session.user.id,
-        productId: productId,
+        productId: internalProductId, // 内部Product IDを使用
       },
     });
     

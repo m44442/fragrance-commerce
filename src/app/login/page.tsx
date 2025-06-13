@@ -47,16 +47,25 @@ export default function AuthPage() {
 
     if (isLogin) {
       // ログイン処理
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+      try {
+        const result = await signIn('credentials', {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
 
-      if (result?.error) {
-        setError('メールアドレスまたはパスワードが正しくありません');
-      } else {
-        router.push('/');
+        if (result?.error) {
+          setError('メールアドレスまたはパスワードが正しくありません');
+        } else if (result?.ok) {
+          // ログイン成功後のリダイレクト処理
+          router.push('/');
+          router.refresh();
+        } else {
+          setError('ログインに失敗しました');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setError('ログインに失敗しました');
       }
     } else {
       // 新規登録処理

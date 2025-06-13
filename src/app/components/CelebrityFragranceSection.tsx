@@ -61,7 +61,7 @@ const CelebrityFragrancesPage = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">推し香水コレクション</h1>
         <div className="flex justify-center py-12">
           <div className="animate-spin h-10 w-10 border-4 border-custom-peach rounded-full border-t-transparent"></div>
@@ -71,30 +71,23 @@ const CelebrityFragrancesPage = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">推し香水コレクション</h1>
-      
-      {/* カテゴリフィルター */}
-      <div className="flex overflow-x-auto space-x-2 mb-6 py-2">
-        {categories.map(category => (
-          <button
-            key={category.id}
-            className={`px-4 py-2 rounded-full whitespace-nowrap ${
-              selectedCategory === category.id 
-                ? "bg-custom-peach text-white" 
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => setSelectedCategory(category.id)}
-          >
-            {category.name}
-          </button>
-        ))}
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* ヘッダー部分 */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">推し香水コレクション</h2>
+        <Link href="/celebrity-fragrances" className="text-custom-peach text-sm font-medium hover:text-custom-peach-dark transition-colors flex items-center">
+          もっと見る
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
       
-      {/* 商品グリッド */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCelebrities.map(item => (
-          <div key={item.id} className="bg-white rounded-lg shadow overflow-hidden">
+      
+      {/* 商品グリッド - ホームページでは6件のみ表示 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        {filteredCelebrities.slice(0, 6).map(item => (
+          <Link key={item.id} href={`/products/${item.fragranceId}`} className="bg-white rounded-lg shadow overflow-hidden block hover:shadow-lg transition-shadow">
             <div className="relative h-64">
               {item.thumbnailUrl ? (
                 <Image 
@@ -131,17 +124,11 @@ const CelebrityFragrancesPage = () => {
               
               <p className="text-gray-600 text-sm mb-4">{item.description}</p>
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-center items-center">
                 <span className="text-lg font-bold">¥{item.price?.toLocaleString()}</span>
-                <Link 
-                  href={`/products/${item.fragranceId}`}
-                  className="bg-custom-peach text-white px-4 py-2 rounded hover:bg-custom-peach-dark"
-                >
-                  詳細を見る
-                </Link>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
       

@@ -1,6 +1,10 @@
 "use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Search, Heart, User } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 // ナビゲーション項目の定義
 const navItems = [
@@ -10,36 +14,47 @@ const navItems = [
   { id: 4, label: "マイページ", icon: User, href: "/profile" },
 ];
 
-const BottomNavigation = () => {
-  return (
-    <nav className="fixed bottom-0 w-full max-w-[790px] h-16 bg-white border-t border-gray-100 z-10">
-      <div className="grid grid-cols-4 h-full">
-        {/* 通常のナビゲーション項目 */}
-        {navItems.slice(0, 2).map((item) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className="flex flex-col items-center justify-center"
-          >
-            <item.icon className="w-6 h-6" />
-            <span className="text-xs mt-1">{item.label}</span>
-          </Link>
-        ))}
+export default function BottomNavigation() {
+  const pathname = usePathname();
+  const { data: session } = useSession();
 
-        {/* 残りのナビゲーション項目 */}
-        {navItems.slice(2).map((item) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className="flex flex-col items-center justify-center"
-          >
-            <item.icon className="w-6 h-6" />
-            <span className="text-xs mt-1">{item.label}</span>
-          </Link>
-        ))}
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-4">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          const needsAuth = item.href === "/favorites" || item.href === "/profile";
+          const href = needsAuth && !session ? "/login" : item.href;
+          
+          return (
+            <Link
+              key={item.id}
+              href={href}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-[60px]",
+                isActive
+                  ? "text-indigo-600 bg-indigo-50"
+                  : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
+              )}
+            >
+              <item.icon
+                className={cn(
+                  "w-5 h-5 mb-1 transition-all",
+                  isActive && "scale-110"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  isActive && "font-semibold"
+                )}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
-};
-
-export default BottomNavigation;
+}

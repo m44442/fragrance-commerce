@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { nextAuthOptions } from '@/lib/next-auth/options';
-import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/next-auth/options';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       where: { email: session.user.email },
     });
 
-    if (!adminUser || adminUser.role !== 'ADMIN') {
+    if (!adminUser || !adminUser.isAdmin) {
       return NextResponse.json(
         { message: '管理者権限が必要です' },
         { status: 403 }

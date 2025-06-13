@@ -81,6 +81,7 @@ const DetailProduct = () => {
           userId: session?.user?.id,
           productId: params?.id
         });
+        setIsLiked(false);
         return;
       }
       
@@ -97,12 +98,21 @@ const DetailProduct = () => {
           const data = await response.json();
           console.log("いいね状態データ:", data);
           setIsLiked(data.liked);
+        } else if (response.status === 401) {
+          console.log("認証エラー: ログインが必要です");
+          setIsLiked(false);
         } else {
-          const errorData = await response.json();
-          console.error("いいね状態チェックエラー:", errorData);
+          try {
+            const errorData = await response.json();
+            console.error("いいね状態チェックエラー:", errorData);
+          } catch (jsonError) {
+            console.error("エラーレスポンスの解析に失敗:", response.status, response.statusText);
+          }
+          setIsLiked(false);
         }
       } catch (error) {
         console.error("いいね状態の確認に失敗:", error);
+        setIsLiked(false);
       }
     };
     
@@ -554,34 +564,20 @@ const DetailProduct = () => {
           ) : (
             <div className="mt-6 space-y-4">
               {/* サブスク未加入者用エリア */}
-              {/* サブスクリプションバナー - 画像をそのまま使用 */}
-              <div className="relative rounded-lg overflow-hidden mb-6">
-                {/* バナー画像 */}
-                <Image 
-                  src={product.thumbnail.url}
-                  alt={product.title}
-                  fill
-                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 70vw, 600px"
-                  className="object-cover object-center rounded-lg"
-                  priority
-                  quality={90}
-                />
-                
-                {/* サブスク開始ボタン */}
-                <button
-                  onClick={() => router.push('/subscription')}
-                  className="mt-4 w-full py-3 flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  <span>このアイテムでサブスクを始める</span>
-                </button>
-                
-                <div className="mt-2 text-center">
-                  <Link href="/subscription" className="text-sm text-[#E9A68D] flex items-center justify-center">
-                    サブスクについてもっとみる
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </div>
+              {/* サブスク開始ボタン */}
+              <button
+                onClick={() => router.push('/subscription')}
+                className="w-full py-3 flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                <span>このアイテムでサブスクを始める</span>
+              </button>
+              
+              <div className="text-center">
+                <Link href="/subscription" className="text-sm text-[#E9A68D] flex items-center justify-center">
+                  サブスクについてもっとみる
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </div>
               
               {/* 単品購入ボタン */}

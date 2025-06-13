@@ -9,9 +9,16 @@ const SettingsPage = () => {
     email: "",
     phoneNumber: "",
   });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
   
   useEffect(() => {
     const fetchUserData = async () => {
@@ -42,6 +49,11 @@ const SettingsPage = () => {
     setUserData(prev => ({ ...prev, [name]: value }));
   };
   
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user?.id) return;
@@ -69,6 +81,53 @@ const SettingsPage = () => {
     }
   };
   
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user?.id) return;
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage("新しいパスワードが一致しません");
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 8) {
+      setPasswordMessage("パスワードは8文字以上で入力してください");
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    setPasswordMessage("");
+    
+    try {
+      const response = await fetch(`/api/users/${session.user.id}/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setPasswordMessage("パスワードを変更しました");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        setPasswordMessage(data.message || "パスワードの変更に失敗しました");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordMessage("エラーが発生しました");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
   };
@@ -140,6 +199,69 @@ const SettingsPage = () => {
           </div>
         )}
       </form>
+      
+      {/* パスワード変更セクション */}
+      <div className="mt-12 pt-8 border-t">
+        <h2 className="text-lg font-semibold mb-4">パスワード変更</h2>
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              現在のパスワード
+            </label>
+            <input
+              type="password"
+              name="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              新しいパスワード
+            </label>
+            <input
+              type="password"
+              name="newPassword"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+              minLength={8}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              新しいパスワード（確認）
+            </label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isChangingPassword}
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50"
+          >
+            {isChangingPassword ? "変更中..." : "パスワードを変更"}
+          </button>
+          
+          {passwordMessage && (
+            <div className={`p-3 rounded-md ${passwordMessage.includes("失敗") || passwordMessage.includes("エラー") || passwordMessage.includes("一致") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+              {passwordMessage}
+            </div>
+          )}
+        </form>
+      </div>
       
       <div className="mt-12 pt-8 border-t">
         <h2 className="text-lg font-semibold mb-4">アカウント操作</h2>

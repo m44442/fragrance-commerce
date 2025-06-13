@@ -35,6 +35,32 @@ const PaymentForm = ({
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 購入履歴を手動で作成する関数
+  const createPurchaseRecord = async (productId: string, paymentIntentId: string) => {
+    try {
+      console.log('Creating purchase record for productId:', productId);
+      const response = await fetch('/api/purchase-record', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          paymentIntentId,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Purchase record created:', data);
+      } else {
+        console.error('Failed to create purchase record:', response.status);
+      }
+    } catch (error) {
+      console.error('Error creating purchase record:', error);
+    }
+  };
+
   useEffect(() => {
     if (!stripe) return;
 
@@ -53,6 +79,8 @@ const PaymentForm = ({
         switch (paymentIntent.status) {
           case "succeeded":
             setMessage("決済が完了しました！");
+            // 購入履歴を手動で作成
+            createPurchaseRecord(productId, paymentIntent.id);
             onPaymentComplete();
             break;
           case "processing":
@@ -87,39 +115,23 @@ const PaymentForm = ({
         return;
       }
 
-      // 選択された決済方法によって分岐
-    switch (selectedPaymentMethod) {
-      case 'cpmt_1RGvICDP6em8TiNFEoCpZ1en': // Paidy
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paidy-redirect?product_id=${productId}&price=${productPrice}`;
+      // elements.submit()で選択された決済方法を取得
+      const submitResult = await elements.submit();
+
+      if (submitResult.error) {
+        setMessage(submitResult.error.message || "フォームの送信中にエラーが発生しました。");
+        setIsLoading(false);
         return;
-      
-      case 'cpmt_1RGvJVDP6em8TiNF4aykL5f9': // PayPay
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paypay-redirect?product_id=${productId}&price=${productPrice}`;
-        return;
-      
-      case 'cpmt_1RGvLxDP6em8TiNF8bdzVD5B': // メルペイ
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/merpay-redirect?product_id=${productId}&price=${productPrice}`;
-        return;
-      
-      case 'cpmt_1RGvMuDP6em8TiNFvXdu275T': // auPay
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/aupay-redirect?product_id=${productId}&price=${productPrice}`;
-        return;
-      
-      case 'cpmt_1RGvMTDP6em8TiNFsBcPSYHB': // d払い
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/dpay-redirect?product_id=${productId}&price=${productPrice}`;
-        return;
-      
-      case 'cpmt_1RGvJlDP6em8TiNFQdcnoGxi': // PayPal
-        window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/paypal-redirect?product_id=${productId}&price=${productPrice}`;
-        return;
-      
-      default: // Stripe標準の決済方法
-        const { error } = await stripe.confirmPayment({
-          elements,
-          confirmParams: {
-            return_url: `${window.location.origin}/checkout/success`,
-          },
-        });
+      }
+
+      // Stripe決済の確認
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout/success`,
+        },
+        redirect: 'if_required'
+      });
 
       if (error) {
         if (error.type === "card_error" || error.type === "validation_error") {
@@ -127,8 +139,13 @@ const PaymentForm = ({
         } else {
           setMessage("予期せぬエラーが発生しました。");
         }
-      }
-      break;
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // 決済成功時に購入履歴を作成
+        setMessage("決済が完了しました！");
+        await createPurchaseRecord(productId, paymentIntent.id);
+        onPaymentComplete();
+        // 成功ページにリダイレクト
+        window.location.href = `${window.location.origin}/checkout/success`;
       }
     } catch (error) {
       console.error("Payment processing error:", error);
@@ -169,6 +186,7 @@ const PaymentForm = ({
       </div>
 
       <button
+        type="submit"
         disabled={isLoading || !stripe || !elements}
         className="w-full bg-custom-peach text-white py-3 px-4 rounded-lg font-medium disabled:opacity-50"
       >
@@ -257,58 +275,6 @@ const PaymentComponent = ({
     clientSecret,
     appearance,
     locale: 'ja' as const,
-    // カスタム決済方法の指定
-    customPaymentMethods: [
-      {
-        id: 'cpmt_1RGvICDP6em8TiNFEoCpZ1en',
-        options: {
-          type: 'static' as const,
-          subtitle: 'Paidyでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvJVDP6em8TiNF4aykL5f9',
-        options: {
-          type: 'static' as const,
-          subtitle: 'PayPayでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvLxDP6em8TiNF8bdzVD5B',
-        options: {
-          type: 'static' as const,
-          subtitle: 'メルペイでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvMuDP6em8TiNFvXdu275T',
-        options: {
-          type: 'static' as const,
-          subtitle: 'auPayでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvMTDP6em8TiNFsBcPSYHB',
-        options: {
-          type: 'static' as const,
-          subtitle: 'd払いでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvMhDP6em8TiNFA9gc2Cas',
-        options: {
-          type: 'static' as const,
-          subtitle: '楽天ペイでお支払い',
-        }
-      },
-      {
-        id: 'cpmt_1RGvJlDP6em8TiNFQdcnoGxi',
-        options: {
-          type: 'static' as const,
-          subtitle: 'PayPalでお支払い',
-        }
-      }
-    ]
   };
 
   return (

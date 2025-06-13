@@ -1,17 +1,16 @@
 // src/lib/next-auth/options.ts
 import { NextAuthOptions } from "next-auth";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import LineProvider from "next-auth/providers/line";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import prisma from "../prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
-export const nextAuthOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   // 重要：secretを追加
   secret: process.env.NEXTAUTH_SECRET,
 
-  debug: false, // 本番では false にする
+  debug: process.env.NODE_ENV === 'development', // 開発環境でのみデバッグ
 
   providers: [
     GoogleProvider({
@@ -56,6 +55,7 @@ export const nextAuthOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            isAdmin: user.isAdmin,
           };
         } catch (error) {
           console.error("Authorization error:", error);
@@ -65,7 +65,8 @@ export const nextAuthOptions: NextAuthOptions = {
     }),
   ],
 
-  adapter: PrismaAdapter(prisma),
+  // PrismaAdapterを削除（JWTとの競合を避けるため）
+  // adapter: PrismaAdapter(prisma),
 
   pages: {
     signIn: "/login",
@@ -80,16 +81,37 @@ export const nextAuthOptions: NextAuthOptions = {
 
   callbacks: {
     jwt: async ({ token, user }) => {
+      // ユーザーがログインした場合
       if (user) {
         token.id = user.id;
+        token.email = user.email;
         token.role = (user as any).role;
+        token.isAdmin = (user as any).isAdmin;
+      } else if (token.email && !token.id) {
+        // セッション継続時にIDが不足している場合、メールからIDを取得
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            select: { id: true, isAdmin: true, role: true }
+          });
+          
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.isAdmin = dbUser.isAdmin;
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error('JWT callback error:', error);
+        }
       }
       return token;
     },
     session: async ({ session, token }) => {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.email = token.email as string;
         session.user.role = token.role as string;
+        (session.user as any).isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

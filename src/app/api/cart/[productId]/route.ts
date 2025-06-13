@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { nextAuthOptions } from '@/lib/next-auth/options';
-import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/next-auth/options';
+import { prisma } from '@/lib/prisma';
 
 // GET: カート内の商品を取得
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -45,14 +45,33 @@ export async function POST(
   { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const session = await getServerSession(nextAuthOptions);
+    const session = await getServerSession(authOptions);
+    
+    console.log('=== Cart POST Debug ===');
+    console.log('Session:', JSON.stringify(session, null, 2));
+    console.log('Session user ID:', session?.user?.id);
+    console.log('Session user email:', session?.user?.email);
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.log('ERROR: No user ID in session');
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        debug: {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          hasUserId: !!session?.user?.id,
+          hasUserEmail: !!session?.user?.email,
+          session: session
+        }
+      }, { status: 401 });
     }
 
     const { productId } = await params;
     const { quantity = 1, isSample = false } = await request.json();
+
+    console.log('Product ID:', productId);
+    console.log('Quantity:', quantity);
+    console.log('Is Sample:', isSample);
 
     // MicroCMSのIDの場合、対応するProductレコードを探すか作成
     let product = await prisma.product.findFirst({
@@ -64,15 +83,30 @@ export async function POST(
       }
     });
 
+    console.log('Found product in DB:', !!product);
+
     if (!product) {
+      console.log('Product not found in DB, fetching from MicroCMS...');
       // MicroCMSから商品情報を取得して、Productテーブルに作成
       try {
         const { getAllProducts } = await import('@/lib/microcms/client');
         const { contents } = await getAllProducts();
         const microCmsProduct = contents.find(p => p.id === productId);
         
+        console.log('MicroCMS products count:', contents.length);
+        console.log('Found MicroCMS product:', !!microCmsProduct);
+        
         if (!microCmsProduct) {
-          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+          console.log('Product not found in MicroCMS either');
+          return NextResponse.json({ 
+            error: 'Product not found',
+            debug: {
+              productId,
+              searchedInDb: true,
+              searchedInMicroCms: true,
+              microCmsProductsCount: contents.length
+            }
+          }, { status: 404 });
         }
 
         // ブランドを取得または作成
@@ -171,8 +205,12 @@ export async function DELETE(
     }
 
     const { productId } = await params;
+    
+    console.log('=== Deleting cart item ===');
+    console.log('userId:', session.user.id);
+    console.log('productId:', productId);
 
-    await prisma.cartItem.deleteMany({
+    const result = await prisma.cartItem.deleteMany({
       where: {
         cart: {
           userId: session.user.id
@@ -180,8 +218,10 @@ export async function DELETE(
         productId: productId
       }
     });
+    
+    console.log('Deleted items count:', result.count);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deletedCount: result.count });
   } catch (error) {
     console.error('Error removing from cart:', error);
     return NextResponse.json(

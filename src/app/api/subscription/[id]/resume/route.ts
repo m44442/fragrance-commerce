@@ -38,9 +38,19 @@ export async function POST(
     
     // Stripeでの処理（もしStripeのサブスクリプションIDがある場合）
     if (subscription.stripeSubscriptionId) {
-      await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
-        pause_collection: '',
-      });
+      try {
+        await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+          pause_collection: null,
+        });
+      } catch (stripeError: any) {
+        // Stripeでサブスクリプションが見つからない場合は警告のみ出力
+        if (stripeError.code === 'resource_missing') {
+          console.warn(`Stripe subscription ${subscription.stripeSubscriptionId} not found, continuing with database update`);
+        } else {
+          // その他のStripeエラーの場合は再スロー
+          throw stripeError;
+        }
+      }
     }
     
     // データベースを更新

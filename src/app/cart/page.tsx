@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Trash2 } from "lucide-react";
-import PaymentComponent from "@/components/PaymentComponent"; // 既存の決済コンポーネントをインポート
+import PaymentComponent from "@/components/PaymentComponent";
 
 interface CartItem {
   id: string;
@@ -80,8 +80,32 @@ const CartPage = () => {
     }
   };
   
-  const handleRemoveItem = (productId: string) => {
-    updateCartItem(productId, false);
+  const handleRemoveItem = async (productId: string) => {
+    if (!session?.user) return;
+    
+    console.log('Removing item from cart:', productId);
+    setIsUpdating(true);
+    
+    try {
+      const response = await fetch(`/api/cart/${productId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        // カートデータを再取得
+        const cartResponse = await fetch('/api/cart');
+        if (cartResponse.ok) {
+          const data = await cartResponse.json();
+          setCart(data);
+        }
+      } else {
+        console.error('Failed to remove item:', response.status);
+      }
+    } catch (error) {
+      console.error("Error removing item:", error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
   
   const handleQuantityChange = (productId: string, newQuantity: number) => {
@@ -128,9 +152,12 @@ const CartPage = () => {
       return response.json();
     })
     .then(data => {
-      // サーバーからの最新データでカートを更新
-      setCart(data);
+      console.log('Quantity updated successfully');
+      // カートを再取得して最新データで更新
+      return fetch('/api/cart');
     })
+    .then(response => response.json())
+    .then(data => setCart(data))
     .catch(error => {
       console.error("Error updating cart quantity:", error);
       
@@ -328,15 +355,14 @@ const CartPage = () => {
             </div>
           </div>
           
-          {/* 既存の決済コンポーネントを使用 */}
+          {/* 決済コンポーネント */}
           <PaymentComponent 
-            productId="cart"  // カート全体を示す特別な値
+            productId="cart"
             productName={`カート内商品（${cart.totalItems}点）`}
             productPrice={cart.totalPrice}
             brandName=""
             onPaymentComplete={() => {
               // 支払い完了後の処理
-              // カートをクリアしてサクセスページに遷移など
               window.location.href = "/checkout/success";
             }}
           />
