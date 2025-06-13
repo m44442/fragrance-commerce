@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllProducts } from '@/lib/product-helpers';
+import { getAllProducts } from '@/lib/microcms/client';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://rumini.jp';
@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 動的ページ（商品）
   let productPages: MetadataRoute.Sitemap = [];
   try {
-    const products = await getAllProducts();
+    const { contents: products } = await getAllProducts();
     productPages = products.map((product) => ({
       url: `${baseUrl}/products/${product.id}`,
       lastModified: new Date(product.updatedAt || product.createdAt),
