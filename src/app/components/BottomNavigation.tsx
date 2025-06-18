@@ -19,7 +19,7 @@ export default function BottomNavigation() {
   const { data: session } = useSession();
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:w-96 bg-white border border-gray-200 z-50 shadow-lg rounded-xl">
+    <nav className="fixed bottom-4 left-4 right-4 md:left-0 md:right-0 md:bottom-0 md:w-full md:transform-none bg-white border border-gray-200 z-50 shadow-lg rounded-xl md:rounded-none md:border-t md:border-l-0 md:border-r-0 md:border-b-0">
       <div className="flex items-center justify-around h-16 px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
