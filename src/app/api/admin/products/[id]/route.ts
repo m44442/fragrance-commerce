@@ -10,7 +10,7 @@ export async function GET(
   try {
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -46,7 +46,7 @@ export async function PUT(
   try {
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -56,11 +56,10 @@ export async function PUT(
       name,
       description,
       price,
-      samplePrice,
+      discountPrice,
       imageUrl,
       stock,
-      sampleStock,
-      isActive,
+      isPublished,
       brandId
     } = data;
 
@@ -71,7 +70,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    if (price < 0 || samplePrice < 0 || stock < 0 || sampleStock < 0) {
+    if (price < 0 || (discountPrice && discountPrice < 0) || stock < 0) {
       return NextResponse.json({ 
         error: '価格と在庫は0以上である必要があります' 
       }, { status: 400 });
@@ -103,11 +102,10 @@ export async function PUT(
         name,
         description,
         price: parseInt(price),
-        samplePrice: parseInt(samplePrice),
-        imageUrl: imageUrl || null,
+        discountPrice: discountPrice ? parseInt(discountPrice) : null,
+        thumbnailUrl: imageUrl || null,
         stock: parseInt(stock),
-        sampleStock: parseInt(sampleStock),
-        isActive: Boolean(isActive),
+        isPublished: Boolean(isPublished),
         brandId
       },
       include: {
@@ -134,7 +132,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 // SMTP設定
 const createTransporter = () => {
   if (process.env.EMAIL_PROVIDER === 'gmail') {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,

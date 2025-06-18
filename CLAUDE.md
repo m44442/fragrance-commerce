@@ -16,6 +16,11 @@
 - Product関連: `isPublished` (not `isActive`)、`discountPrice` (not `samplePrice`)
 - 実装前にPrismaスキーマを必ず確認すること
 
+### NextAuth型定義 - 絶対遵守
+- `session?.user?.isAdmin`は型エラーになる
+- **正しい書き方**: `(session?.user as any)?.isAdmin`
+- NextAuthのユーザー型にisAdminプロパティが含まれていないため
+
 ## 開発ガイドライン
 
 ### コードスタイル
