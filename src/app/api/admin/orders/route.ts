@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
             email: true
           }
         },
-        items: {
+        orderItems: {
           include: {
             product: {
               include: {

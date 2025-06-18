@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -14,8 +14,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+    
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         brand: {
           select: {
@@ -39,7 +41,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -48,6 +50,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const data = await request.json();
     const {
       name,
@@ -76,7 +79,7 @@ export async function PUT(
 
     // 商品の存在確認
     const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingProduct) {
@@ -95,7 +98,7 @@ export async function PUT(
     }
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description,
@@ -126,7 +129,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
@@ -135,9 +138,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+    
     // 商品の存在確認
     const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingProduct) {
@@ -146,7 +151,7 @@ export async function DELETE(
 
     // 関連データの確認（注文履歴がある場合は削除をブロック）
     const hasOrders = await prisma.orderItem.findFirst({
-      where: { productId: params.id }
+      where: { productId: id }
     });
 
     if (hasOrders) {
@@ -157,22 +162,22 @@ export async function DELETE(
 
     // カートアイテムの削除
     await prisma.cartItem.deleteMany({
-      where: { productId: params.id }
+      where: { productId: id }
     });
 
     // お気に入りの削除
     await prisma.favorite.deleteMany({
-      where: { productId: params.id }
+      where: { productId: id }
     });
 
     // レビューの削除
     await prisma.review.deleteMany({
-      where: { productId: params.id }
+      where: { productId: id }
     });
 
     // 商品の削除
     await prisma.product.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ message: '商品が削除されました' });

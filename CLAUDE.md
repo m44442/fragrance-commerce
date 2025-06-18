@@ -3,6 +3,19 @@
 ## プロジェクト概要
 このプロジェクトはNext.jsで構築された香水ECアプリケーションです。
 
+## 重要な注意事項・禁止事項
+
+### Next.js App Router 動的ルート - 絶対遵守
+- **重要**: Next.js 13+ App Routerでは動的ルートのparamsは非同期で取得する
+- **正しい書き方**: `{ params }: { params: Promise<{ id: string }> }`
+- **パラメータ取得**: `const { id } = await params;`
+- **古い書き方は使用禁止**: `{ params }: { params: { id: string } }`
+
+### データベースフィールド名 - 絶対遵守
+- Order関連: `orderItems` (not `items`)、`total` (not `totalAmount`)、`shippingStatus`、`paymentStatus`
+- Product関連: `isPublished` (not `isActive`)、`discountPrice` (not `samplePrice`)
+- 実装前にPrismaスキーマを必ず確認すること
+
 ## 開発ガイドライン
 
 ### コードスタイル

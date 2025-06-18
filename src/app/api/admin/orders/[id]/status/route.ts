@@ -5,28 +5,30 @@ import prisma from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(nextAuthOptions);
     
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { status } = await request.json();
 
-    // バリデーション
-    const validStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+    // バリデーション（ShippingStatusに合わせる）
+    const validStatuses = ['PENDING', 'PREPARING', 'SHIPPED', 'DELIVERED'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ 
         error: '無効なステータスです' 
       }, { status: 400 });
     }
 
+    const { id } = await params;
+    
     // 注文の存在確認
     const existingOrder = await prisma.order.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingOrder) {
@@ -34,16 +36,16 @@ export async function PUT(
     }
 
     // ステータス変更の妥当性チェック
-    if (existingOrder.status === 'cancelled' || existingOrder.status === 'refunded') {
+    if (existingOrder.paymentStatus === 'CANCELLED' || existingOrder.paymentStatus === 'REFUNDED') {
       return NextResponse.json({ 
         error: 'キャンセル済みまたは返金済みの注文のステータスは変更できません' 
       }, { status: 400 });
     }
 
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: { 
-        status,
+        shippingStatus: status,
         updatedAt: new Date()
       },
       include: {
@@ -54,7 +56,7 @@ export async function PUT(
             email: true
           }
         },
-        items: {
+        orderItems: {
           include: {
             product: {
               include: {

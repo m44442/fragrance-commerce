@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(nextAuthOptions);
 
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json(
         { error: '管理者権限が必要です' },
         { status: 401 }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
                 email: true
               }
             },
-            items: {
+            orderItems: {
               include: {
                 product: {
                   include: {
@@ -82,22 +82,23 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        csvContent = '注文ID,注文日時,顧客名,顧客メール,ステータス,合計金額,商品名,数量,単価,配送先\n';
+        csvContent = '注文ID,注文日時,顧客名,顧客メール,配送ステータス,支払いステータス,合計金額,商品名,数量,単価,配送先\n';
         
         orders.forEach(order => {
-          order.items.forEach(item => {
+          order.orderItems.forEach(item => {
             const row = [
               order.id,
               order.createdAt.toISOString(),
               order.user.name,
               order.user.email,
-              order.status,
+              order.shippingStatus,
+              order.paymentStatus,
               order.total,
-              item.product.name,
+              item.product?.name || '',
               item.quantity,
               item.price,
               order.shippingAddress ? 
-                `${order.shippingAddress.prefecture}${order.shippingAddress.city}${order.shippingAddress.address}` : 
+                `${order.shippingAddress.prefecture}${order.shippingAddress.city}${order.shippingAddress.address1}` : 
                 ''
             ].map(escapeCSV).join(',');
             csvContent += row + '\n';
@@ -150,12 +151,6 @@ export async function GET(request: NextRequest) {
               select: {
                 name: true
               }
-            },
-            _count: {
-              select: {
-                OrderItem: true,
-                favorites: true
-              }
             }
           },
           orderBy: {
@@ -163,7 +158,7 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        csvContent = '商品ID,商品名,ブランド,価格,試供品価格,在庫,試供品在庫,ステータス,注文回数,お気に入り数,作成日時\n';
+        csvContent = '商品ID,商品名,ブランド,価格,割引価格,在庫,公開ステータス,新商品,注目商品,レビュー数,平均評価,作成日時\n';
         
         products.forEach(product => {
           const row = [
@@ -171,12 +166,13 @@ export async function GET(request: NextRequest) {
             product.name,
             product.brand.name,
             product.price,
-            product.samplePrice,
+            product.discountPrice || '',
             product.stock,
-            product.sampleStock,
-            product.isActive ? '販売中' : '停止中',
-            product._count.OrderItem,
-            product._count.favorites,
+            product.isPublished ? '公開中' : '非公開',
+            product.isNew ? 'はい' : 'いいえ',
+            product.isFeatured ? 'はい' : 'いいえ',
+            product.reviewCount,
+            product.averageRating || '',
             product.createdAt.toISOString()
           ].map(escapeCSV).join(',');
           csvContent += row + '\n';
@@ -189,16 +185,14 @@ export async function GET(request: NextRequest) {
         // 分析データのエクスポート
         const analyticsOrders = await prisma.order.findMany({
           where: {
-            createdAt: { gte: startDate },
-            status: {
-              notIn: ['cancelled', 'refunded']
-            }
+            createdAt: { gte: startDate }
           },
           select: {
             id: true,
             createdAt: true,
             total: true,
-            status: true
+            shippingStatus: true,
+            paymentStatus: true
           },
           orderBy: {
             createdAt: 'asc'

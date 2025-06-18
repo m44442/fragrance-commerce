@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(nextAuthOptions);
 
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json(
         { message: '管理者権限が必要です' },
         { status: 401 }
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
           createdAt: {
             gte: startDate,
           },
-          status: {
-            notIn: ['cancelled', 'refunded']
+          paymentStatus: {
+            not: 'FAILED'
           }
         },
         select: {
@@ -81,16 +81,16 @@ export async function GET(request: NextRequest) {
         prisma.user.count(),
         prisma.order.count({
           where: {
-            status: {
-              notIn: ['cancelled', 'refunded']
+            paymentStatus: {
+              not: 'FAILED'
             },
             createdAt: { gte: startDate },
           },
         }),
         prisma.order.aggregate({
           where: {
-            status: {
-              notIn: ['cancelled', 'refunded']
+            paymentStatus: {
+              not: 'FAILED'
             },
             createdAt: { gte: startDate },
           },
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
         by: ['productId'],
         where: {
           order: {
-            status: {
-              notIn: ['cancelled', 'refunded']
+            paymentStatus: {
+              not: 'FAILED'
             },
             createdAt: { gte: startDate }
           }
