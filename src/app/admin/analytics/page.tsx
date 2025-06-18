@@ -140,7 +140,7 @@ export default function AnalyticsPage() {
           <div className="flex justify-between items-center py-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">アクセス解析・売上分析</h1>
-              <p className="text-gray-600">データドリブンな意思決定をサポート</p>
+              <p className="text-gray-600">分析用です</p>
             </div>
             <div className="flex space-x-4">
               <div className="relative inline-block text-left">

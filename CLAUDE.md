@@ -96,6 +96,18 @@
 - `npm run lint` - ESLint実行
 - `npm run typecheck` - TypeScriptコンパイラーチェック実行
 
+## 購入フロー・データ管理
+### Purchase vs Order テーブル
+- **重要**: 実際の購入データは`Order`テーブルに記録される
+- `Purchase`テーブルは下位互換性のためのみ使用
+- Stripe Webhook と checkout success は両方のテーブルに記録する
+- 管理画面は`Order`テーブルから表示する
+
+### 購入データ作成ルール
+- Stripe Webhook: `Order` + `OrderItem` + `Purchase` を作成
+- Checkout Success: `Order` + `OrderItem` + `Purchase` を作成
+- 重複チェック: `stripePaymentIntentId` で既存確認
+
 ## 備考
 - 香水ECアプリケーション
 - 主要技術：Next.js、TypeScript、React

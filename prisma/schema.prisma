@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,12 +13,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -35,9 +34,9 @@ model Session {
 }
 
 model User {
-  id               String         @id @default(cuid())
+  id               String          @id @default(cuid())
   name             String?
-  email            String?        @unique
+  email            String?         @unique
   emailVerified    DateTime?
   image            String?
   password         String?
@@ -46,20 +45,20 @@ model User {
   prefecture       String?
   city             String?
   address          String?
-  role             String         @default("USER")
-  isAdmin          Boolean        @default(false)
-  stripeCustomerId String?        @unique
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  role             String          @default("USER")
+  stripeCustomerId String?         @unique
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  isAdmin          Boolean         @default(false)
   accounts         Account[]
-  sessions         Session[]
-  favorites        Favorite[]
   cart             Cart?
+  favorites        Favorite[]
+  orders           Order[]
   purchases        Purchase[]
-  subscriptions    Subscription[]
   reviews          Review[]
   reviewHelpful    ReviewHelpful[]
-  orders           Order[]
+  sessions         Session[]
+  subscriptions    Subscription[]
 }
 
 model VerificationToken {
@@ -83,65 +82,65 @@ model Brand {
 }
 
 model Product {
-  id                String     @id @default(cuid())
+  id                String      @id @default(cuid())
   name              String
   brandId           String
   description       String?
-  price             Int        @default(0)
+  price             Int         @default(0)
   discountPrice     Int?
-  stock             Int        @default(0)
+  stock             Int         @default(0)
   thumbnailUrl      String?
   topNotes          String?
   middleNotes       String?
   baseNotes         String?
   volume            Int?
   concentration     String?
-  isPublished       Boolean    @default(true)
-  isNew             Boolean    @default(false)
-  isFeatured        Boolean    @default(false)
-  microCmsId        String?    @unique
+  isPublished       Boolean     @default(true)
+  isNew             Boolean     @default(false)
+  isFeatured        Boolean     @default(false)
+  microCmsId        String?     @unique
   microCmsUpdatedAt DateTime?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  brand             Brand      @relation(fields: [brandId], references: [id])
-  favorites         Favorite[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  averageRating     Float?
+  reviewCount       Int         @default(0)
   cartItems         CartItem[]
+  favorites         Favorite[]
+  orderItems        OrderItem[]
+  brand             Brand       @relation(fields: [brandId], references: [id])
   purchases         Purchase[]
   reviews           Review[]
-  orderItems        OrderItem[]
-  averageRating     Float?     @db.DoublePrecision
-  reviewCount       Int        @default(0)
 }
 
 model Review {
-  id           String   @id @default(cuid())
-  rating       Int      @db.SmallInt // 1-5の範囲
-  comment      String?  @db.Text
+  id           String          @id @default(cuid())
+  rating       Int             @db.SmallInt
+  comment      String?
   userId       String
   productId    String
-  isVerified   Boolean  @default(false) // 購入済みかどうか
-  helpfulCount Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  helpfulVotes ReviewHelpful[] // 「参考になった」の投票記録
+  isVerified   Boolean         @default(false)
+  helpfulCount Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpfulVotes ReviewHelpful[]
 
-  @@unique([userId, productId]) // 1ユーザー1商品につき1レビュー
+  @@unique([userId, productId])
   @@index([productId, createdAt])
   @@index([productId, rating])
   @@index([isVerified])
 }
 
 model ReviewHelpful {
-  id       String @id @default(cuid())
-  reviewId String
-  userId   String
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
   createdAt DateTime @default(now())
-  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([reviewId, userId]) // 1ユーザー1レビューにつき1投票
+  @@unique([reviewId, userId])
 }
 
 model Favorite {
@@ -149,8 +148,8 @@ model Favorite {
   userId    String
   productId String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
@@ -169,9 +168,9 @@ model CartItem {
   cartId    String
   productId String
   quantity  Int      @default(1)
-  isSample  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isSample  Boolean  @default(false)
   cart      Cart     @relation(fields: [cartId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
 
@@ -183,49 +182,30 @@ model Purchase {
   userId      String
   fragranceId String
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
   fragrance   Product  @relation(fields: [fragranceId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, fragranceId])
 }
 
-enum SubscriptionStatus {
-  ACTIVE
-  PAUSED
-  CANCELED
-}
-
-enum SubscriptionPlan {
-  MONTHLY
-  ANNUAL
-}
-
 model Subscription {
-  id                    String               @id @default(cuid())
+  id                    String                 @id @default(cuid())
   userId                String
   stripeCustomerId      String?
-  stripeSubscriptionId  String?              @unique
-  plan                  SubscriptionPlan     @default(MONTHLY)
-  status                SubscriptionStatus   @default(ACTIVE)
+  stripeSubscriptionId  String?                @unique
+  plan                  SubscriptionPlan       @default(MONTHLY)
+  status                SubscriptionStatus     @default(ACTIVE)
   nextDeliveryDate      DateTime?
   nextBillingDate       DateTime?
-  preferCustomSelection Boolean              @default(false)
+  preferCustomSelection Boolean                @default(false)
   deliveryOption        String?
   canceledAt            DateTime?
   endDate               DateTime?
-  paymentFailed         Boolean              @default(false)
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  user                  User                 @relation(fields: [userId], references: [id])
+  paymentFailed         Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  user                  User                   @relation(fields: [userId], references: [id])
   deliveries            SubscriptionDelivery[]
-}
-
-enum DeliveryStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  FAILED
 }
 
 model SubscriptionDelivery {
@@ -242,53 +222,46 @@ model SubscriptionDelivery {
   subscription   Subscription   @relation(fields: [subscriptionId], references: [id])
 }
 
-enum ShippingStatus {
-  PENDING
-  PREPARING
-  SHIPPED
-  DELIVERED
-}
-
 model Order {
-  id             String         @id @default(cuid())
-  orderNumber    String?        @unique
-  userId         String
-  total          Int            @default(0)
-  subtotal       Int            @default(0)
-  tax            Int            @default(0)
-  shippingFee    Int            @default(0)
-  shippingStatus ShippingStatus @default(PENDING)
-  paymentStatus  String         @default("PENDING")
-  paymentMethod  String?
+  id                    String           @id @default(cuid())
+  orderNumber           String?          @unique
+  userId                String
+  total                 Int              @default(0)
+  subtotal              Int              @default(0)
+  tax                   Int              @default(0)
+  shippingFee           Int              @default(0)
+  shippingStatus        ShippingStatus   @default(PENDING)
+  paymentStatus         String           @default("PENDING")
+  paymentMethod         String?
   stripePaymentIntentId String?
-  shippedAt      DateTime?
-  deliveredAt    DateTime?
-  canceledAt     DateTime?
-  notes          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  user           User           @relation(fields: [userId], references: [id])
-  orderItems     OrderItem[]
-  shippingAddress ShippingAddress?
+  shippedAt             DateTime?
+  deliveredAt           DateTime?
+  canceledAt            DateTime?
+  notes                 String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  user                  User             @relation(fields: [userId], references: [id])
+  orderItems            OrderItem[]
+  shippingAddress       ShippingAddress?
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String?
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String?
   productName String?
-  quantity  Int      @default(1)
-  price     Int      @default(0)
-  isSample  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product? @relation(fields: [productId], references: [id])
+  quantity    Int      @default(1)
+  price       Int      @default(0)
+  isSample    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
 }
 
 model ShippingAddress {
-  id         String  @id @default(cuid())
-  orderId    String  @unique
+  id         String   @id @default(cuid())
+  orderId    String   @unique
   name       String
   postalCode String
   prefecture String
@@ -298,5 +271,31 @@ model ShippingAddress {
   phone      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  order      Order   @relation(fields: [orderId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  ANNUAL
+}
+
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FAILED
+}
+
+enum ShippingStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  DELIVERED
 }
