@@ -68,7 +68,10 @@ export async function GET(
     });
     
     if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
+      return NextResponse.json({ 
+        subscription: null,
+        message: 'No active subscription found' 
+      }, { status: 200 });
     }
     
     // Stripeから支払い方法情報を取得

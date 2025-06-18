@@ -311,7 +311,7 @@ const SearchPage = () => {
                       <h3 className="text-sm font-medium truncate">{product.title}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <p className="text-xs text-pink-500">{product.category}</p>
-                        <p className="text-xs font-semibold">¥{product.price.toLocaleString()}</p>
+                        <p className="text-xs font-semibold">¥{product.price?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                   </Link>

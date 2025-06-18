@@ -226,11 +226,11 @@ const SubscriptionPage = () => {
                   </td>
                   {/* 各セルの背景色も選択中のプランタイプに応じて変更 */}
                   <td className={`p-4 border text-center ${selectedPlanType === "MONTHLY" ? "bg-custom-peach bg-opacity-70" : ""}`}>
-                    ¥{plans[0].items[index].price.toLocaleString()}/月
+                    ¥{plans[0].items[index]?.price?.toLocaleString() || '0'}/月
                   </td>
                   <td className={`p-4 border text-center ${selectedPlanType === "ANNUAL" ? "bg-custom-peach bg-opacity-70" : ""}`}>
                     <div>
-                      <div className="font-bold">¥{plans[1].items[index].price.toLocaleString()}/月</div>
+                      <div className="font-bold">¥{plans[1].items[index]?.price?.toLocaleString() || '0'}/月</div>
                       {(plans[1].items[index] as any).discount && (
                         <div className="text-green-600 text-xs">{(plans[1].items[index] as any).discount}</div>
                       )}
@@ -294,7 +294,7 @@ const SubscriptionPage = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">月額料金</span>
-            <span className="font-medium">¥{currentItem.price.toLocaleString()}</span>
+            <span className="font-medium">¥{currentItem.price?.toLocaleString() || '0'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">アトマイザーケース</span>

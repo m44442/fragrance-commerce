@@ -258,7 +258,7 @@ const CartPage = () => {
                     </Link>
                     <p className="text-sm text-gray-500">{item.product.brand}</p>
                     <p className="font-semibold mt-1">
-                      ¥{(item.product.discountPrice || item.product.price).toLocaleString()}
+                      ¥{(item.product.discountPrice || item.product.price)?.toLocaleString() || '0'}
                     </p>
                   </div>
                   
@@ -300,7 +300,7 @@ const CartPage = () => {
                   <p className="text-gray-500">合計（{cart.totalItems}点）</p>
                 </div>
                 <div className="text-xl font-bold">
-                  ¥{cart.totalPrice.toLocaleString()}
+                  ¥{cart.totalPrice?.toLocaleString() || '0'}
                 </div>
               </div>
             </div>
@@ -342,7 +342,7 @@ const CartPage = () => {
                     {item.product.name} × {item.quantity}
                   </span>
                   <span className="font-medium">
-                    ¥{((item.product.discountPrice || item.product.price) * item.quantity).toLocaleString()}
+                    ¥{((item.product.discountPrice || item.product.price) * item.quantity)?.toLocaleString() || '0'}
                   </span>
                 </div>
               ))}
@@ -350,7 +350,7 @@ const CartPage = () => {
             <div className="pt-3 border-t">
               <div className="flex justify-between font-bold">
                 <span>合計</span>
-                <span>¥{cart.totalPrice.toLocaleString()}</span>
+                <span>¥{cart.totalPrice?.toLocaleString() || '0'}</span>
               </div>
             </div>
           </div>

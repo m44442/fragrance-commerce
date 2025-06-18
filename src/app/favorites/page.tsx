@@ -198,7 +198,7 @@ export default function FavoritesPage() {
                         {product.category.join(", ")}
                       </p>
                       <p className="text-lg font-semibold text-gray-900">
-                        ¥{product.price.toLocaleString()}
+                        ¥{product.price?.toLocaleString() || '0'}
                       </p>
                     </div>
                     <button

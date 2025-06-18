@@ -359,8 +359,8 @@ export default function ProductsManagement() {
                     {product.brand.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>本品: ¥{product.price.toLocaleString()}</div>
-                    <div className="text-gray-500">試供品: ¥{product.samplePrice.toLocaleString()}</div>
+                    <div>本品: ¥{product.price?.toLocaleString() || '0'}</div>
+                    <div className="text-gray-500">試供品: ¥{product.samplePrice?.toLocaleString() || '0'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>

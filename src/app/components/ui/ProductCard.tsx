@@ -167,7 +167,7 @@ export function ProductCard({
         )}
         
         <div className="flex justify-between items-center">
-          <span className="text-lg font-bold">¥{price.toLocaleString()}</span>
+          <span className="text-lg font-bold">¥{price?.toLocaleString() || '0'}</span>
           <Button
             size="sm"
             variant="primary"

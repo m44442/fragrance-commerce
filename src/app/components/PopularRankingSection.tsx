@@ -57,7 +57,7 @@ const PopularRankingSection = async () => {
                 <p className="text-xs text-gray-500 truncate mb-1">{contents.brand}</p>
                 <h2 className="text-xs font-medium mb-1 line-clamp-2 leading-tight">{contents.title}</h2>
                 <div className="text-xs font-bold text-custom-peach">
-                  ¥{contents.price.toLocaleString()}
+                  ¥{contents.price?.toLocaleString() || '0'}
                 </div>
               </div>
             </Link>
