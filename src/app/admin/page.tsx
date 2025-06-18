@@ -211,9 +211,6 @@ export default function AdminDashboard() {
               <button className="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 ユーザー管理
               </button>
-              <Link href="/admin/products" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                商品管理
-              </Link>
               <Link href="/admin/orders" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 注文管理
               </Link>

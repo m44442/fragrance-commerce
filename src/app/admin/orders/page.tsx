@@ -175,13 +175,13 @@ export default function OrdersManagement() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = (orders || []).filter(order => {
     const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.items.some(item => 
-        item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.items?.some(item => 
+        item.product?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     
     const matchesStatus = !statusFilter || order.status === statusFilter;
@@ -261,7 +261,7 @@ export default function OrdersManagement() {
 
             <div className="flex items-end">
               <div className="text-sm text-gray-600">
-                {filteredOrders.length} 件の注文
+                {filteredOrders?.length || 0} 件の注文
               </div>
             </div>
           </div>
@@ -293,39 +293,39 @@ export default function OrdersManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
+              {filteredOrders?.map((order) => (
                 <tr key={order.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        #{order.id.slice(-8)}
+                        #{order.id?.slice(-8) || 'N/A'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {order.user.name}
+                        {order.user?.name || 'Unknown User'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {order.user.email}
+                        {order.user?.email || 'No Email'}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="space-y-1">
-                      {order.items.slice(0, 2).map((item) => (
+                      {order.items?.slice(0, 2).map((item) => (
                         <div key={item.id} className="text-sm text-gray-900">
-                          {item.product.name} 
+                          {item.product?.name || 'Unknown Product'} 
                           {item.isSample && ' (試供品)'}
-                          <span className="text-gray-500"> ×{item.quantity}</span>
+                          <span className="text-gray-500"> ×{item.quantity || 0}</span>
                         </div>
                       ))}
-                      {order.items.length > 2 && (
+                      {(order.items?.length || 0) > 2 && (
                         <div className="text-sm text-gray-500">
-                          他 {order.items.length - 2} 件
+                          他 {(order.items?.length || 0) - 2} 件
                         </div>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ¥{order.totalAmount.toLocaleString()}
+                    ¥{order.totalAmount?.toLocaleString() || '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -359,7 +359,7 @@ export default function OrdersManagement() {
             </tbody>
           </table>
 
-          {filteredOrders.length === 0 && (
+          {(filteredOrders?.length || 0) === 0 && (
             <div className="text-center py-12">
               <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">注文が見つかりません</h3>
@@ -381,7 +381,7 @@ export default function OrdersManagement() {
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    注文詳細 #{selectedOrder.id.slice(-8)}
+                    注文詳細 #{selectedOrder.id?.slice(-8) || 'N/A'}
                   </h3>
                   <button
                     onClick={() => setIsDetailModalOpen(false)}
@@ -439,7 +439,7 @@ export default function OrdersManagement() {
                     <div className="border-t pt-2 mt-2">
                       <div className="flex justify-between items-center font-semibold">
                         <span>合計</span>
-                        <span>¥{selectedOrder.totalAmount.toLocaleString()}</span>
+                        <span>¥{selectedOrder.totalAmount?.toLocaleString() || '0'}</span>
                       </div>
                     </div>
                   </div>
@@ -535,8 +535,8 @@ export default function OrdersManagement() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">
-                        注文 #{selectedOrder.id.slice(-8)} の返金を実行します。
-                        金額: ¥{selectedOrder.totalAmount.toLocaleString()}
+                        注文 #{selectedOrder.id?.slice(-8) || 'N/A'} の返金を実行します。
+                        金額: ¥{selectedOrder.totalAmount?.toLocaleString() || '0'}
                       </p>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
