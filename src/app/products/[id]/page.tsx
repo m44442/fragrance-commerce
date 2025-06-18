@@ -242,11 +242,8 @@ const DetailProduct = () => {
       return;
     }
     
-    // お試しサイズを注文する場合はサブスク加入者かチェック
-    if (isSample && !hasActiveSubscription) {
-      alert("お試しサイズはサブスクリプション会員限定です");
-      return;
-    }
+    // お試しサイズは誰でも利用可能
+    // 以前はサブスク限定でしたが、現在は制限なし
 
     startTransition(() => {
       addOptimisticAddedToCart(true); // 楽観的更新

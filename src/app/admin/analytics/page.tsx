@@ -67,46 +67,14 @@ export default function AnalyticsPage() {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      // ダミーデータを返す（開発中のため）
-      const dummyData: AnalyticsData = {
-        salesOverTime: [
-          { date: '2025-06-07', amount: 50000, orders: 5 },
-          { date: '2025-06-08', amount: 75000, orders: 8 },
-          { date: '2025-06-09', amount: 60000, orders: 6 },
-          { date: '2025-06-10', amount: 90000, orders: 9 },
-          { date: '2025-06-11', amount: 85000, orders: 7 },
-          { date: '2025-06-12', amount: 70000, orders: 8 },
-          { date: '2025-06-13', amount: 95000, orders: 10 }
-        ],
-        topProducts: [
-          { id: '1', name: 'シャネル No.5', sales: 25, revenue: 125000 },
-          { id: '2', name: 'ディオール サヴァージュ', sales: 20, revenue: 100000 },
-          { id: '3', name: 'トム フォード ブラック オーキッド', sales: 15, revenue: 90000 }
-        ],
-        userGrowth: [
-          { date: '2025-06-07', users: 100, newUsers: 5 },
-          { date: '2025-06-08', users: 105, newUsers: 8 },
-          { date: '2025-06-09', users: 113, newUsers: 6 },
-          { date: '2025-06-10', users: 119, newUsers: 9 },
-          { date: '2025-06-11', users: 128, newUsers: 7 },
-          { date: '2025-06-12', users: 135, newUsers: 8 },
-          { date: '2025-06-13', users: 143, newUsers: 10 }
-        ],
-        conversionMetrics: {
-          totalVisitors: 1000,
-          totalUsers: 143,
-          totalOrders: 53,
-          conversionRate: 5.3,
-          averageOrderValue: 8500
-        },
-        revenueByCategory: [
-          { category: 'レディース', revenue: 300000, percentage: 60 },
-          { category: 'メンズ', revenue: 150000, percentage: 30 },
-          { category: 'ユニセックス', revenue: 50000, percentage: 10 }
-        ]
-      };
+      const response = await fetch('/api/admin/analytics');
       
-      setData(dummyData);
+      if (!response.ok) {
+        throw new Error('分析データの取得に失敗しました');
+      }
+      
+      const analyticsData = await response.json();
+      setData(analyticsData);
     } catch (error) {
       console.error('Failed to fetch analytics data:', error);
       setError('分析データの取得中にエラーが発生しました');
@@ -116,7 +84,27 @@ export default function AnalyticsPage() {
   };
 
   const exportData = async () => {
-    alert('エクスポート機能は開発中です');
+    try {
+      const response = await fetch('/api/admin/analytics/export');
+      
+      if (!response.ok) {
+        throw new Error('エクスポートに失敗しました');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `analytics-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('エクスポートに失敗しました');
+    }
   };
 
   if (loading) {
@@ -155,13 +143,36 @@ export default function AnalyticsPage() {
               <p className="text-gray-600">データドリブンな意思決定をサポート</p>
             </div>
             <div className="flex space-x-4">
-              <button
-                onClick={exportData}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                データエクスポート
-              </button>
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={exportData}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  分析データをエクスポート
+                </button>
+              </div>
+              
+              <div className="flex space-x-2">
+                <a
+                  href="/api/admin/analytics/export?type=orders"
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  注文データ
+                </a>
+                <a
+                  href="/api/admin/analytics/export?type=users"
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  ユーザーデータ
+                </a>
+                <a
+                  href="/api/admin/analytics/export?type=products"
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  商品データ
+                </a>
+              </div>
               <Link
                 href="/admin"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"

@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No orders found to update' }, { status: 404 });
     }
 
-    // 発送済みの場合、メール通知などの追加処理を行う場合はここに追加
+    // 発送済みの場合、メール通知を送信（将来実装予定）
     if (status === 'SHIPPED') {
-      // TODO: 発送通知メールの送信処理
+      // TODO: メール機能の実装（データベーススキーマ調整後）
       console.log(`${orderIds.length} orders shipped, notification emails should be sent`);
     }
 

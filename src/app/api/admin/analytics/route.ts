@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/next-auth/options';
+import { getServerSession } from 'next-auth/next';
+import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(nextAuthOptions);
 
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: '認証が必要です' },
-        { status: 401 }
-      );
-    }
-
-    // 管理者権限をチェック
-    const adminUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!adminUser || adminUser.role !== 'ADMIN') {
+    if (!session?.user?.isAdmin) {
       return NextResponse.json(
         { message: '管理者権限が必要です' },
-        { status: 403 }
+        { status: 401 }
       );
     }
 
@@ -60,7 +48,9 @@ export async function GET(request: NextRequest) {
           createdAt: {
             gte: startDate,
           },
-          canceledAt: null, // Only include non-cancelled orders
+          status: {
+            notIn: ['cancelled', 'refunded']
+          }
         },
         select: {
           createdAt: true,
@@ -91,13 +81,17 @@ export async function GET(request: NextRequest) {
         prisma.user.count(),
         prisma.order.count({
           where: {
-            canceledAt: null,
+            status: {
+              notIn: ['cancelled', 'refunded']
+            },
             createdAt: { gte: startDate },
           },
         }),
         prisma.order.aggregate({
           where: {
-            canceledAt: null,
+            status: {
+              notIn: ['cancelled', 'refunded']
+            },
             createdAt: { gte: startDate },
           },
           _sum: { total: true },
@@ -105,14 +99,30 @@ export async function GET(request: NextRequest) {
         }),
       ]),
 
-      // 商品別売上（モックデータ - 実際のOrderItemモデルがある場合は調整）
-      prisma.product.findMany({
-        select: {
-          id: true,
-          name: true,
-          price: true,
+      // 商品別売上（実データ）
+      prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          order: {
+            status: {
+              notIn: ['cancelled', 'refunded']
+            },
+            createdAt: { gte: startDate }
+          }
         },
-        take: 10,
+        _sum: {
+          quantity: true,
+          price: true
+        },
+        _count: {
+          id: true
+        },
+        orderBy: {
+          _sum: {
+            price: 'desc'
+          }
+        },
+        take: 10
       }),
     ]);
 
@@ -154,13 +164,32 @@ export async function GET(request: NextRequest) {
     const averageOrderValue = orderAggregation._avg.total || 0;
     const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers) * 100 : 0;
 
-    // トップ商品（モックデータ - 実際のデータがある場合は調整）
-    const topProducts = productSales.map((product, index) => ({
-      id: product.id,
-      name: product.name || '商品名',
-      sales: Math.floor(Math.random() * 100) + 10, // モックデータ
-      revenue: Math.floor(Math.random() * 500000) + 50000, // モックデータ
-    }));
+    // トップ商品（実データ）
+    const productIds = productSales.map(item => item.productId).filter(id => id !== null) as string[];
+    const products = await prisma.product.findMany({
+      where: {
+        id: {
+          in: productIds
+        }
+      },
+      include: {
+        brand: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    const topProducts = productSales.map(salesData => {
+      const product = products.find(p => p.id === salesData.productId);
+      return {
+        id: salesData.productId,
+        name: product?.name || '商品名',
+        sales: salesData._sum?.quantity || 0,
+        revenue: (salesData._sum?.price || 0) * (salesData._sum?.quantity || 0),
+      };
+    });
 
     // カテゴリ別売上（モックデータ）
     const revenueByCategory = [

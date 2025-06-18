@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const stripe = getStripe();
     const setupIntent = await stripe.setupIntents.create({
       customer: stripeCustomerId,
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'konbini'],
     });
     
     return NextResponse.json({ clientSecret: setupIntent.client_secret });

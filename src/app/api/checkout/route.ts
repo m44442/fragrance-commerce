@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
         },
         automatic_payment_methods: {
           enabled: true,
-        }
+          allow_redirects: 'always'
+        },
+        payment_method_types: ['card', 'konbini']
       });
       
       return NextResponse.json({ clientSecret: paymentIntent.client_secret });

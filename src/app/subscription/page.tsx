@@ -147,8 +147,17 @@ const SubscriptionPage = () => {
       <h1 className="text-3xl font-bold mb-8 text-center">
         サブスクリプション
       </h1>
-      
-      {/* 説明部分は省略 */}
+
+      {/* コース選択画像の追加 */}
+      <div className="mb-8 flex justify-center">
+        <Image 
+          src="/subscription_banner.jpg" 
+          alt="サブスクリプションコース比較" 
+          width={800} 
+          height={400} 
+          className="rounded-lg shadow-lg object-contain max-w-full h-auto"
+        />
+      </div>
       
       {/* コースタイプ選択 */}
       <div className="mb-8">
@@ -171,7 +180,7 @@ const SubscriptionPage = () => {
                   </div>
                 </div>
               )}
-              <h3 className="font-medium text-lg">{plan.name}</h3>
+              <h3 className="font-medium text-base whitespace-nowrap">{plan.name}</h3>
               <p className="text-gray-600 text-sm mt-1">
                 {plan.id === "ANNUAL" ? "長期割引適用" : "割引なし"}
               </p>
@@ -322,7 +331,7 @@ const SubscriptionPage = () => {
         </button>
         
         <p className="text-center text-gray-500 text-sm">
-          お申し込みには会員登録が必要です。初月は無料でお試しいただけます。いつでも解約可能です。
+          お申し込みには会員登録が必要です。初月は無料でお試しいただけます。お試しサイズはサブスク加入者以外もご利用いただけます。いつでも解約可能です。
         </p>
       </div>
     </div>
