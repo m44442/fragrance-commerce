@@ -201,15 +201,54 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   
   if (type === 'single_purchase' && productId) {
     console.log('Processing single purchase for userId:', userId, 'productId:', productId);
-    // 単品購入の場合、購入履歴を作成
+    // 単品購入の場合、Order記録を作成
     try {
-      const purchase = await prisma.purchase.create({
+      // 商品情報を取得
+      const product = await prisma.product.findUnique({
+        where: { id: productId }
+      });
+      
+      if (!product) {
+        console.error('Product not found:', productId);
+        return;
+      }
+      
+      // Orderを作成
+      const order = await prisma.order.create({
+        data: {
+          userId,
+          total: product.price,
+          subtotal: product.price,
+          tax: 0,
+          shippingFee: 0,
+          shippingStatus: 'PENDING',
+          paymentStatus: 'COMPLETED',
+          paymentMethod: 'stripe',
+          stripePaymentIntentId: paymentIntent.id,
+          orderItems: {
+            create: {
+              productId: productId,
+              productName: product.name,
+              quantity: 1,
+              price: product.price,
+              isSample: false
+            }
+          }
+        },
+        include: {
+          orderItems: true
+        }
+      });
+      
+      console.log('Order record created successfully:', order.id);
+      
+      // 下位互換性のためPurchase記録も作成
+      await prisma.purchase.create({
         data: {
           userId,
           fragranceId: productId,
         },
       });
-      console.log('Purchase record created successfully:', purchase.id);
       
       // カートから商品を削除（存在する場合）
       const cart = await prisma.cart.findUnique({
@@ -226,18 +265,58 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         console.log('Removed item from cart');
       }
     } catch (error) {
-      console.error('Error creating purchase record:', error);
+      console.error('Error creating order record:', error);
     }
   } else if (type === 'cart_purchase') {
-    // カート購入の場合、すべての商品の購入履歴を作成
+    // カート購入の場合、Order記録を作成
     try {
       const cart = await prisma.cart.findUnique({
         where: { userId },
-        include: { items: true }
+        include: { 
+          items: {
+            include: {
+              product: true
+            }
+          }
+        }
       });
       
       if (cart && cart.items.length > 0) {
-        // 購入履歴を作成
+        // 合計金額を計算
+        const subtotal = cart.items.reduce((sum, item) => {
+          return sum + (item.product?.price || 0) * item.quantity;
+        }, 0);
+        
+        // Orderを作成
+        const order = await prisma.order.create({
+          data: {
+            userId,
+            total: subtotal,
+            subtotal: subtotal,
+            tax: 0,
+            shippingFee: 0,
+            shippingStatus: 'PENDING',
+            paymentStatus: 'COMPLETED',
+            paymentMethod: 'stripe',
+            stripePaymentIntentId: paymentIntent.id,
+            orderItems: {
+              create: cart.items.map(item => ({
+                productId: item.productId,
+                productName: item.product?.name || 'Unknown Product',
+                quantity: item.quantity,
+                price: item.product?.price || 0,
+                isSample: false
+              }))
+            }
+          },
+          include: {
+            orderItems: true
+          }
+        });
+        
+        console.log('Cart order created successfully:', order.id);
+        
+        // 下位互換性のためPurchase記録も作成
         const purchases = cart.items.map(item => ({
           userId,
           fragranceId: item.productId,
