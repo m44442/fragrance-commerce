@@ -4,9 +4,9 @@ import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-02-24.acacia',
-});
+}) : null;
 
 export async function POST(
   request: NextRequest,
@@ -63,6 +63,12 @@ export async function POST(
       return NextResponse.json({ 
         error: '決済情報が見つからないため返金できません' 
       }, { status: 400 });
+    }
+
+    if (!stripe) {
+      return NextResponse.json({ 
+        error: 'Stripe設定が正しくありません' 
+      }, { status: 500 });
     }
 
     try {
