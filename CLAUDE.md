@@ -109,6 +109,12 @@
 - 重複チェック: `userId` + `fragranceId` で既存確認
 - 管理画面URL: `/admin/purchases`
 
+### アトマイザーケース管理
+- **重要**: アトマイザーケースデータはmicroCMSで管理する
+- ハードコーディング禁止 - 必ずmicroCMSから取得
+- API: `/api/atomizer-cases` でmicroCMSデータを取得
+- フロントエンド: microCMS API経由でデータ表示
+
 ## 備考
 - 香水ECアプリケーション
 - 主要技術：Next.js、TypeScript、React

@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { getServerSession } from 'next-auth/next';
 import { nextAuthOptions } from '@/lib/next-auth/options';
 import prisma from '@/lib/prisma';
+import { getAtomizerCases } from '@/lib/microcms/client';
 
 const getStripe = () => {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -146,11 +147,23 @@ export async function POST(request: Request) {
       }
     });
     
+    // アトマイザーケースの名前をmicroCMSから取得
+    let caseName = caseColor; // フォールバック
+    try {
+      const atomizerCases = await getAtomizerCases();
+      const selectedCase = atomizerCases.contents?.find((caseItem: any) => caseItem.id === caseColor);
+      if (selectedCase) {
+        caseName = selectedCase.name;
+      }
+    } catch (error) {
+      console.error('Failed to fetch atomizer case name:', error);
+    }
+    
     // 初回のアトマイザーケース配送を作成
     await prisma.subscriptionDelivery.create({
       data: {
         subscriptionId: newSubscription.id,
-        productName: `初回特典：アトマイザーケース（${caseColor === 'SILVER' ? 'シルバー' : 'ブラック'}）`,
+        productName: `初回特典：アトマイザーケース（${caseName}）`,
         status: 'PROCESSING',
         shippingDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3日後に発送予定
       }

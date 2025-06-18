@@ -54,26 +54,24 @@ const SubscriptionPage = () => {
   useEffect(() => {
     const fetchAtomizerCases = async () => {
       try {
-        // atomizer_casesエンドポイントが存在しないため、直接フォールバック処理を使用
-        // 将来的にエンドポイントが作成された場合はコメントアウトを解除
-        // atomizer_casesエンドポイントが存在しないため、直接フォールバックデータを使用
-        const fallbackCases = [
-          { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/default_icon.png" },
-          { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/default_icon.png" },
-          { id: "GOLD", name: "ゴールド", color: "gold", imageUrl: "/default_icon.png" },
-          { id: "ROSE_GOLD", name: "ローズゴールド", color: "#e8b4b8", imageUrl: "/default_icon.png" },
-        ];
-        setAtomizerCases(fallbackCases);
-        setSelectedCase(fallbackCases[0].id);
+        // microCMSからアトマイザーケースデータを取得
+        const response = await fetch('/api/atomizer-cases');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.contents && data.contents.length > 0) {
+            setAtomizerCases(data.contents);
+            setSelectedCase(data.contents[0].id);
+          } else {
+            console.log('No atomizer cases found in microCMS');
+            setAtomizerCases([]);
+          }
+        } else {
+          console.error('Failed to fetch atomizer cases from API');
+          setAtomizerCases([]);
+        }
       } catch (error) {
         console.error("Error fetching atomizer cases:", error);
-        // エラー時もフォールバックデータを使用
-        const fallbackCases = [
-          { id: "BLACK", name: "ブラック", color: "black", imageUrl: "/Rumini.jpg" },
-          { id: "SILVER", name: "シルバー", color: "silver", imageUrl: "/Rumini.jpg" },
-        ];
-        setAtomizerCases(fallbackCases);
-        setSelectedCase(fallbackCases[0].id);
+        setAtomizerCases([]);
       } finally {
         setIsDataLoading(false);
       }
