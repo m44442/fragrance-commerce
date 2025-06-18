@@ -97,16 +97,17 @@
 - `npm run typecheck` - TypeScriptコンパイラーチェック実行
 
 ## 購入フロー・データ管理
-### Purchase vs Order テーブル
-- **重要**: 実際の購入データは`Order`テーブルに記録される
-- `Purchase`テーブルは下位互換性のためのみ使用
-- Stripe Webhook と checkout success は両方のテーブルに記録する
-- 管理画面は`Order`テーブルから表示する
+### Purchase テーブル中心の設計
+- **重要**: 実際の購入データは`Purchase`テーブルに記録される
+- `Order`テーブルは使用しない（単純化のため）
+- 管理画面は`Purchase`テーブルから表示する
+- 効率的でシンプルなデータ構造
 
 ### 購入データ作成ルール
-- Stripe Webhook: `Order` + `OrderItem` + `Purchase` を作成
-- Checkout Success: `Order` + `OrderItem` + `Purchase` を作成
-- 重複チェック: `stripePaymentIntentId` で既存確認
+- Stripe Webhook: `Purchase` のみ作成
+- Checkout Success: `Purchase` のみ作成  
+- 重複チェック: `userId` + `fragranceId` で既存確認
+- 管理画面URL: `/admin/purchases`
 
 ## 備考
 - 香水ECアプリケーション
